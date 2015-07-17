@@ -1,0 +1,152 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>73200f9a-90bb-4788-b2c6-b0651dc6e88b</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>TaskPaneDNA</RootNamespace>
+    <AssemblyName>TaskPaneDNA</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFSharpCoreVersion>4.3.1.0</TargetFSharpCoreVersion>
+    <Name>TaskPaneDNA</Name>
+    <SccProjectName>SAK</SccProjectName>
+    <SccProvider>SAK</SccProvider>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
+    <RestorePackages>true</RestorePackages>
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <Tailcalls>false</Tailcalls>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <WarningLevel>3</WarningLevel>
+    <DocumentationFile>bin\Debug\TaskPaneDNA.XML</DocumentationFile>
+    <StartAction>Program</StartAction>
+    <StartProgram>C:\Program Files\Microsoft Office 15\root\office15\EXCEL.EXE</StartProgram>
+    <StartArguments>"TabularTaskPaneDNA-AddIn64.xll"</StartArguments>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <Tailcalls>true</Tailcalls>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <WarningLevel>3</WarningLevel>
+    <DocumentationFile>bin\Release\TaskPaneDNA.XML</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup>
+    <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
+  </PropertyGroup>
+  <Choose>
+    <When Condition="'$(VisualStudioVersion)' == '11.0'">
+      <PropertyGroup Condition="Exists('$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets')">
+        <FSharpTargetsPath>$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets</FSharpTargetsPath>
+      </PropertyGroup>
+    </When>
+    <Otherwise>
+      <PropertyGroup Condition="Exists('$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\FSharp\Microsoft.FSharp.Targets')">
+        <FSharpTargetsPath>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\FSharp\Microsoft.FSharp.Targets</FSharpTargetsPath>
+      </PropertyGroup>
+    </Otherwise>
+  </Choose>
+  <Import Project="$(FSharpTargetsPath)" />
+  <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
+  <PropertyGroup>
+    <PostBuildEvent>
+      echo F | xcopy "$(ProjectDir)..\dependencies\ExcelDNA\ExcelDna64.xll"  "$(TargetDir)TabularTaskPaneDNA-AddIn64.xll" /C /Y
+      echo F | xcopy "$(ProjectDir)..\dependencies\ExcelDNA\ExcelDna.xll"      "$(TargetDir)TabularTaskPaneDNA-AddIn32.xll" /C /Y
+
+       echo F | xcopy "$(ProjectDir)..\dependencies\ExcelDNA\ExcelDna.xll"      "$(TargetDir)Tabular-32.xll" /C /Y
+      echo F | "$(ProjectDir)..\dependencies\ExcelDNA\ExcelDNAPack.exe" "$(TargetDir)Tabular-32.dna" /C /Y
+ 
+       echo F | xcopy "$(ProjectDir)..\dependencies\ExcelDNA\ExcelDna64.xll"      "$(TargetDir)Tabular-64.xll" /C /Y
+      echo F | "$(ProjectDir)..\dependencies\ExcelDNA\ExcelDNAPack.exe" "$(TargetDir)Tabular-64.dna" /C /Y
+      
+      call “%VS120COMNTOOLS%\vsvars32.bat”
+      cd $(ProjectDir)
+      echo F | "Fsi.exe"  "$(ProjectDir)postbuild.fsx"
+</PostBuildEvent>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="ExcelDna.Integration">
+      <HintPath>..\Dependencies\exceldna\ExcelDna.Integration.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Office.Interop.Excel, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c" />
+    <Reference Include="mscorlib" />
+    <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="office, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="WindowsFormsIntegration" />
+    <Reference Include="xunit">
+      <HintPath>..\packages\xunit.1.9.1\lib\net20\xunit.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AssemblyInfo.fs" />
+    <None Include="TabularTaskPaneDNA-AddIn32.xll.config" />
+    <None Include="TabularTaskPaneDNA-AddIn64.xll.config" />
+    <None Include="RELEASE_NOTES.md" />
+    <Compile Include="TaskPaneLauncher.fs" />
+    <Compile Include="UDFs.fs" />
+    <Content Include="TaskPaneDNA-AddIn.dna">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Include="packages.config" />
+    <None Include="postbuild.fsx" />
+    <None Include="Tabular 32.bat" />
+    <None Include="Tabular 64.bat" />
+    <None Include="TabularTaskPaneDNA-AddIn32.dna">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="TabularTaskPaneDNA-AddIn64.dna">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="Tabular-32.dna">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="Tabular-64.dna">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DataLayerExecution\DataLayerExecution.fsproj">
+      <Name>DataLayerExecution</Name>
+      <Project>{fcaaeb2d-e1f3-41b2-b962-c98c87516126}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\DataLayerModel\DataLayerModel.fsproj">
+      <Name>DataLayerModel</Name>
+      <Project>{0271771d-2a8e-48f3-a2d3-cd0e4a06acb8}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\TaskPane\TaskPane.fsproj">
+      <Name>TaskPane</Name>
+      <Project>{39e8a4a7-8b94-47ee-88f6-122bdc19f5ee}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+  </ItemGroup>
+  <PropertyGroup>
+    <PreBuildEvent>taskkill /F /FI "STATUS eq RUNNING" /IM EXCEL.exe</PreBuildEvent>
+  </PropertyGroup>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

@@ -1,0 +1,45 @@
+﻿<DnaLibrary Name="TaskPane Add-In" RuntimeVersion="v4.0">
+
+
+  <ExternalLibrary Path="TaskPaneDNA.dll" Pack="true" />
+
+  <Reference AssemblyPath="DataLayerModel.dll" Pack="true" />
+  <Reference AssemblyPath="DataLayerExecution.dll" Pack="true" />
+  <Reference AssemblyPath="FSharp.Core.dll" Pack="true" />
+  <Reference AssemblyPath="LexYaccRuntime.dll" Pack="true" />
+  <Reference AssemblyPath="Infer.Compiler.dll" Pack="true" />
+  <Reference AssemblyPath="Infer.Runtime.dll" Pack="true" />
+  <Reference AssemblyPath="TabularExecution.dll" Pack="true" />
+  <Reference AssemblyPath="Parsing.exe" Pack="true" />
+  <Reference AssemblyPath="TabularChecker.exe" Pack="true" />
+  <Reference AssemblyPath="TabularCompiler.exe" Pack="true" />
+  <Reference AssemblyPath="QuickGraph.dll" Pack="true" />
+  <Reference AssemblyPath="System.Reactive.Core.dll" Pack="true" />
+  <Reference AssemblyPath="System.Reactive.Interfaces.dll" Pack="true" />
+  <Reference AssemblyPath="Tabular.dll" Pack="true" />
+  <Reference AssemblyPath="TabularExcelTaskPaneWindows.dll" Pack="true" />
+  <Reference AssemblyPath="TabularModelLibrary.dll" Pack="true" />
+  <Reference AssemblyPath="TaskPane.dll" Pack="true" />
+  <!--<Reference AssemblyPath="TaskPaneDNA.dll" Pack="true" />-->
+  <Reference AssemblyPath="TaskPaneScreen.dll" Pack="true" />
+  <Reference AssemblyPath="TaskPaneModel.dll" Pack="true" />
+  <Reference AssemblyPath="nunit.framework.dll" Pack="true" />
+  <Reference AssemblyPath="CSharpHelpers.dll" Pack="true" />
+  <!--<Reference AssemblyPath="FSharp.Collections.ParallelSeq.dll" Pack="true" />-->
+
+
+  <CustomUI>
+    <customUI xmlns="http://schemas.microsoft.com/office/2009/07/customui">
+      <ribbon>
+        <tabs>
+          <tab id="tab1" label="Tabular">
+            <group id="SampleGroup" >
+              <toggleButton id="ToggleCTPButton" onAction="OnToggleCTP" label="Model" imageMso="ExchangeFolder" size="large"/>
+            </group>
+          </tab>
+        </tabs>
+      </ribbon>
+    </customUI>
+  </CustomUI>
+
+</DnaLibrary>

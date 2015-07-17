@@ -1,0 +1,244 @@
+Version 0.31 (???)
+------------------
+* Fixed method registration to avoid generic methods (for F# standalone).
+* Improved method deregistration to leave functions with #NAME? (thanks to kh).
+* Added completion synchronization for multiple async functions in a formula.
+* Disable IsExceptionSafe when there are DateTime parameters.
+* Added RegisterMethods overload with explicit attributes.
+* Implemented exception-free checks for type compatibility in method registration.
+* Added workaround for RTD disconnect bug in Excel 2010 RTM version.
+* Restructured ExcelDnaUtil.WindowHandle and ExcelDnaUtil.Application to work better under Excel 2013.
+* Fixed ExcelDnaUtil.IsInFunctionWizard() under Excel 2013.
+* Add support for Excel 2010+ native queued async functions.
+* Add support for Excel 2010+ async calculation events.
+* Raise maximum number of functions exported to 5000.
+* Allow ExcelReference in object return values.
+* Truncate strings for registration - long string caused registration to fail.
+* Implement ExcelIntegration.RegisterDelegates.
+* Implement ExcelIntegration.GetFunctionRegistrationInfo.
+* Add SuppressRegistration option to ExcelFunctionAttribute.
+* Fix Unregister bug for direct-created RTD servers.
+* Fix FreeMemory bug with uninitialized marshaler.
+* Apply patch to be more tolerant of type loading errors.
+
+Version 0.30 (12 December 2012)
+-------------------------------
+* Fixed LoadComAddIn error when using a direct ExcelComAddIn-derived class.
+* Fixed (Ribbon Helper) display in ribbon tooltips.
+* Fixed RTD / array formula activation bug.
+* Fixed IsMacroType=true reference argument sheet error (ExcelReference pointed to active sheet instead of current sheet).
+* Fixed array marshaling pointer manipulation concern under 64-bit Excel.
+* Fixed check for derived attributes too - for backward compatibility with v. 0.25.
+* Fixed assembly multiple-loading problem for packed assemblies.
+* Fixed persistent COM registration (Regsv32.exe / ComServer.DllRegisterServer) to allow HKCR registration whenever possible (for UAC elevation issue).
+* Fixed Excel version check when COM / RTD Server loads before add-in is loaded - ribbon would not load.
+* Fixed IntPtr OverflowException in high-memory 32-bit processes.
+* Fixed custom task panes UserControl activation - do HKCR registration whenever possible (for UAC elevation issue).
+* Fixed double[0,1] array marshaling memory allocation error with potential access violation.
+* Allow abstract base classes in ExcelRibbon class hierarchy. Now loads the first concrete descendent of ExcelRibbon as the ribbon handler.
+* Remove Obsolete class ExcelDna.Integration.Excel. (Use ExcelDnaUtil instead.) Allows smooth XlCall usage.
+* Allow external SourceItem packing.
+* Add ExcelAsyncUtil for async macro calls.
+* Add thread-safe RTD server base class ExcelRtdServer.
+* Add async function helper as ExcelAsyncUtil.Run.
+* Add support for Reactive Extensions via RTD via ExcelAsyncUtil.Observe and related interfaces.
+* Change ExcelRibbon and ComAddIn loading to use declared ProgId and Guid if _both_ attributes are present. Fixed Ribbon QAT issue.
+* Revisit caching of Application object.
+* Rename ExcelDna.Integration.Integration to ExcelDna.Integration.ExcelIntegration.
+* Implement macro shortcuts (from ExcelCommand attributes).
+* Changed re-open via File->Open to do full AppDomain unload and add-in reload.
+
+Version 0.29 (28 May 2011)
+--------------------------
+* BREAKING CHANGE! Changed SheetId in the ExcelReference type to an IntPtr.
+* Changed initialization - only create sandboxed AppDomain under .NET 4 (or if explicitly requested with CreateSandboxedAppDomain='true' attribute on DnaLibrary tag in .dna file).
+* Fixed memory leak when getting SheetId for ExcelReference parameters.
+* Fixed Ribbon RunTagMacro when no Workbook open.
+* Fixed Missing/Empty marshaling in XlCall.Excel calls under Excel 2003 and below.
+* Added support for the 64-bit version of Excel 2010 with the .Net 4 runtime.
+* Added Cluster-safe function support for Excel 2010 HPC Cluster Connector - mark functions as IsClusterSafe=true.
+* Added CustomTaskPane support and sample.
+* Added COM server support for RTD servers and other ComVisible classes. Mark ExternalLibraries and Projects as ComServer="true" in the .dna file. Supports Regsvr32 registration or by calling ComServer.DllRegisterServer. Allows direct RTD and VBA object instantiation. Includes TypeLib registration and packing support.
+* Added support for macros with parameters.
+* Added ArrayResizer sample.
+* Added C# 4 dynamic type sample.
+* Added Path attribute to SourceItem tag to allow external source.
+* Added LoadFromBytes attribute to ExternalLibrary tag to prevent locking of .dll.
+* Added /O output path option to ExcelDnaPack.
+* Added 'before' option to CommandBars xml.
+* Added Int64 support for parameters and return values.
+
+Version 0.28 (2 November 2010)
+------------------------------
+* Added VS2008 solution and project files.
+* Fixed namespace for Excel 2010 Ribbon.
+* Explicitly create a FullTrust sandbox AppDomain for all add-ins. This makes loading of libraries over a network or http possible under .Net 4, and easier under .Net 2.0.
+* Added http://... support for loading ExternalLibraries.
+* Fixed packed image bug.
+* Fixed object[0] marshaling crash.
+* Changed LogDisplay to address freezing report.
+* Added check for <MyAddin>.xll in packer.
+* BREAKING CHANGE! Reference resolution modified:
+  - XML Attribute Reference.AssemblyPath renamed to Reference.Path, 
+  - Reference resolution first probes using Reference.Path,
+  - then LoadWithPartialName is called with Reference.Name.
+* Somewhat better error handling when Assembly Load fails, e.g. ExternalLibrary failures.
+* ExcelRibbon objects only instantiated in Excel 2007 and later.
+* Added ExcelCommandBarUtil to allow explicit load of command bars from xml string.
+* Made late-bound CommandBars API public.
+* BREAKING CHANGE! IRibbonUI, IRibbonControl etc. moved to ExcelDna.Integration.CustomUI namespace to avoid type name clash in external libs.
+* Fixed non-zero-base array marshaling.
+
+Version 0.27 (16 August 2010)
+-----------------------------
+* XML-based hierarchical CommandBars updated (thanks to Bertrand).
+* .Net 4.0 support: add RuntimeVersion="v4.0" to the DnaLibrary tag.
+* Shadow copy support: add ShadowCopyFiles="true" to the DnaLibrary tag.
+
+Version 0.26 (31 May 2010)
+--------------------------
+* Ribbon support for Excel 2007 and 2010 and CommandBars for pre-2007.
+* Dynamic RTD server support for Excel 2002 (Office XP) and later.
+* Minor changes to ensure consistent path resolution for References, ExternalLibraries and Images - paths are now checked relative to .dna file path, consistent with ExcelDnaPack.
+* Updated (and multi-thread safe) logging window (thanks to a user contribution).
+
+Version 0.25 (10 April 2010)
+---------------------------
+* Fix case where unpacked .config temp file might not be deleted.
+* Fix compiler problem with .Net 2.0 RTM version introduced in version 0.23.
+* Fix DateTime parameter OutOfRange crash.
+
+Version 0.24 (2 April 2010)
+---------------------------
+* Fixed bug that left many temp files created by .dna file compilation.
+* Add packing of .xll.config files.
+  - If a file MyAddIn.xll.config is found next to the MyAddIn.dna file, the ExcelDnaPack will pack the .config file into the packed .xll too. It is extracted to a DNAxxx.tmp temp file at runtime, and deleted if Excel is closed nicely.
+  - If a config file is present at runtime, that file is used instead of the packed file. 
+  - PackConfig sample added in Samples\Pack\PackConfig. The sample sets up a trace listener file at c:\PackConfig.log.
+
+Version 0.23 (14 March 2010)
+----------------------------
+* Add ExplicitExports attribute to Project and ExternalLibrary (default is false). If set to ExplicitExports="true" only methods marked with ExcelFunction / ExcelCommand attributes will be exported.
+* Add CompilerVersion attribute to DnaLibrary and Project. When set to CompilerVersion="v3.5" for VB or C#, the new language features are enabled.
+* Add Name attribute to Reference for use in LoadWithPartialName.
+* Add ExcelDna.Integration.Integration.RegisterUnhandledExceptionHandler to set user-provided handler that is invoked for functions that throw unhandled exceptions. The handler can log the error, or return error-specific information to Excel. The default handler returns the #VALUE error to Excel as before.
+* Add button to save ExcelDna error log.
+* Create ExcelDnaPack. Add Pack attribute to ExternalLibrary and Reference (default is false).
+  ExcelDnaPack Notes:
+  - By default, only the .dna file, and the ExcelDna.Loader and ExcelDna.Integration assemblies are packed in the .xll.
+  - <ExternalLibrary> can be .dna files or .dll assemblies. These are packed if they are marked as Pack="true".
+  - <Reference> can appear in two contexts: 1. In a project (or in the default project of a DnaLibrary) as a reference to be used when compiling .dna based source at runtime. 2. In a DnaLibrary inside a Project or not, even when there is no source in the .dna file. Such ocurrence of the <Reference> tag is only used to indicate that the referenced assembly should be packed, by adding the Pack="true" attribute. Otherwise in case 2. the reference is not used at all.
+
+Version 0.22 (20 February 2010)
+-------------------------------
+* Fix critical bug in MultiThreaded marshaling (under Excel 2007).
+
+Version 0.21 (10 December 2009)
+-------------------------------
+* There is a bug? in Excel 2007 that limits the total argumentname string to 255 chars. I truncate the argument string for all versions. Sometime the display in the function wizard will now be incomplete.
+* Fix bug if the vb code is used in the .dna file and the .xll is in the root directory of a drive (thanks to Nemo for the error report and fix).
+
+Version 0.20 (21 September 2009)
+--------------------------------
+* Fix COM reference leak in ExcelDnaUtil.Application (thanks to Suraj Gupta for reporting).
+* Updated function and command constants from 2007 xlcall.h file.
+* Made minor changes to ease VS 2005 conversion.
+* Increased max. exported functions to 1000.
+
+Version 0.19 (22 April 2009)
+-----------------------------
+* Fixed localized version ExcelVersion bug (thanks to Martin Drescher)
+* Fixed large object array returns (thanks to Suraj Gupta for reporting).
+
+Version 0.18 (28 December 2008)
+-------------------------------
+* Added support for Excel 2007 Multi-Threaded Recalculation
+   - Use [ExcelFunction(IsThreadSafe=true)] to mark functions that should be registered as thread-safe with Excel 2007 (a $ is added to the registration string).
+   - Macro-type functions (IsMacroType=true) cannot be marked thread-safe, and IsThreadSafe is ignored for these.
+
+Version 0.17 (26 December 2008)
+-------------------------------
+* The system codepage is used for string conversions for Excel versions pre 2007 (thanks to Martin Drescher).
+* IsInFunctionWizard now returns false when called from the Find/Replace dialog box on English verisons of Excel.
+* When the .xll is reloaded via File->Open, I do a close and open, which reloads the .dna file.
+* Excel 2007 data types are now supported - references to cells in the large sheet, and long Unicode strings work as expected.
+* ExcelDnaUtil.ExcelVersion returns the Excel version.
+* ExcelDnaUtil.ExcelLimits returns version-specific limits.
+* ExcelDna.Integration.ExcelEmpty and ...ExcelMissing types added.
+* Internal references (SRefs) are no longer exposed - all ExcelReference objects returned by ExcelDna now have a SheetId filled in.
+* BREAKING CHANGES: In preparation for restructuring the marshaling works, I have made some breaking changes to the types passed into UDFs:
+   - For arguments to UDF functions that are declared as type object, the new types ExcelDna.Integration.ExcelMissing and ExcelDna.Integration.ExcelEmpty are used - these replace 'null' values and System.Reflection.Missing respectively.
+   - Changed ExcelReference.SheetId to be a uint everywhere.
+   ? If you find any of these changes unbearable, please let me know asap.
+   		
+Version 0.16 (3 September 2008)
+-------------------------------
+* Move IsHidden field from ExcelCommandAttribute to ExcelFunctionAttribute to enable 'hidden' functions.
+* Fix AddInManagerInfo.
+* Add support for FSharp September CTP.
+* Make unrooted HelpTopics relative to the xll directory.
+
+Version 0.15 (28 July 2008)
+---------------------------
+* ExcelDna.Integration.Excel class is obsolete. Use ExcelDna.Integration.ExcelDnaUtil.
+The 'Excel' class could be confused with the COM Interop class.
+* Minor fixes for backward compatibility.
+
+Version 0.14 (21 July 2008)
+---------------------------
+* New unmanaged loader architecture.
+* Every Add-In is loaded into its own AppDomain.
+* No MSVC*.dll dependency.
+* Clear messages if runtime is not present or wrong version is loaded.
+* Visual Studio 2008 solution and projects.
+* Breaking Change: ExcelDna.Integration.XlLIbrary.RegisterMethods is now ExcelDna.Integration.Integration.RegisterMethods, e.g. see Samples08.dna 
+
+Version 0.11 (18 March 2007)
+----------------------------
+* Fixed bug when library had function with object[] and object[,] arguments.
+* Created explicit manifests to allow RTM version of C runtime, even when ExcelDna.xll is compiled with Visual Studio 2005 Service Pack 1. This should fix the strange loading problems reported since version 0.8.
+
+Version 0.9 (23 Feburary 2007)
+------------------------------
+* Fixed loading bug from version 0.8.
+* Fixed bug when more that 20 arguments. (At most 20 argument descriptions are allowed.)
+
+Version 0.8 (21 January 2007)
+------------------------------
+* Methods can be dynamically registered in the AutoOpen method of an AddIn.
+ExcelDna.Integration.XlLibrary.RegisterMethods(..) takes a list of MethodInfos to register. See Sample08.dna for an example.
+* Arguments of type object[] and double[] now also accept single column values. If the range passed in has exactly one column, that column is used as the array. If more than one column is passed, the first row is used, as before. object[,] and double[,] have not changed.
+* Minor changes to the Logging window.
+
+Version 0.7 (24 November 2006)
+------------------------------
+* More changes to string marshaling - returned strings now allocated only to required length.
+
+Version 0.6 (15 November 2006)
+------------------------------
+* Fixed Excel crash under stress for functions taking arrays of strings.
+* Restructured memory management in marshaling.
+
+Version 0.5 (29 June 2006)
+--------------------------
+* Fixed stack overflow when loading addin with no .dna file.
+* Fixed Excel crash when returning empty array for double[] return type.
+
+Version 0.4 (25 June 2006)
+--------------------------
+* Changed unload behaviour. Methods, commands and menus are unloaded only when AutoRemove is called (when the addin is removed from the AddIns list. I still call then Add-In's AutoClose when Excel calls AutoClose.
+
+Version 0.3 (28 May 2006)
+-------------------------
+* Support for the Decimal datatype as a parameter, explicit return type and object return value.
+* Rudimentary logging support - see ExcelDna.Logging.LogDisplay.Write / WriteLine.
+* Preview support for Excel Services UDF DLLs with UdfClass and UdfMethod. Current missing are some datatypes and IsVolatile support. Also you currently need to copy the attribute .dll to the same directory as the add-in.
+
+Version 0.2 (20 Feb 2006)
+-------------------------
+* Ensure that library is initialized when xlAddInManagerInfo is called. Thanks Stepan Radkovsky for the help.
+* Changed the attribute on DnaLibrary that determines Add-In display name to 'Name'.
+
+Version 0.1 (16 Jan 2006)
+-------------------------
+* Initial version on .Net 2.0 release.

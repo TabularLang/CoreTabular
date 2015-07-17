@@ -1,0 +1,4 @@
+in powershell
+
+C:\tfs\pp\Dependencies\FsLex\fslex.exe  C:\tfs\pp\Inferno-2012\Parsing\Lexer.fsl
+C:\tfs\pp\Dependencies\FsLex\fsyacc.exe C:\tfs\pp\Inferno-2012\Parsing\Parser.fsy

@@ -1,0 +1,270 @@
+﻿%{
+open MicrosoftResearch.Infer.Tabular.Syntax
+
+let inputOf m = Input
+let paramOf m = Param m
+let latentOf m = Latent m
+let outputOf m = Observable m
+let hyperOf m = match m with MExp e -> Hyper e | _ -> (Static,In,m)
+let markupOf (l,v) m = (l,v,m) : Markup
+type MarkupOf = Model -> Markup
+%}
+// These are the terminal tokens of the grammar along with the types of
+// the data carried by each token:
+%token <System.Int32>   INT
+%token <System.Double>  FLOAT
+%token <System.String>  IDENT
+%token <System.String>  STRING
+%token <System.Boolean> BOOL
+%token <System.String>  PRIMIDENT
+%token INPUT LATENT OUTPUT HYPER PARAM STATIC INSTANCE LOCAL
+%token INDEXED CALL
+%token VAR CONST
+%token IF INFER THEN ELSE FOR DOYIELD LET IN DOT COLON 
+%token NEGATE  NOT     PLUS    MINUS   MULT    DIV     MAX     MOD     OR      AND     EQ      NEQ     LT      GT      LTEQ    GTEQ    
+%token BETA BETAFROMMEANANDVARIANCE GAUSSIANFROMMEANANDPRECISION GAUSSIANFROMMEANANDVARIANCE GAMMAFROMSHAPEANDSCALE GAMMAFROMMEANANDVARIANCE GAMMAFROMSHAPEANDRATE BINOMIAL 
+%token VECTORGAUSSIANFROMMEANANDVARIANCE VECTORGAUSSIANFROMMEANANDPRECISION DISCRETE DISCRETEUNIFORM POISSON BERNOULLI DIRICHLET DIRICHLETUNIFORM DIRICHLETSYMMETRIC WISHARTFROMSHAPEANDRATE WISHARTFROMSHAPEANDSCALE
+%token QRY RND DET
+%token SCAN
+%token SIZEOF
+%token FUNCTION
+%token SETTINGS
+ 
+%token LPAR RPAR LSQBRACKET RSQBRACKET COMMA AMPERSAND EOF 
+%token TRUE FALSE
+
+%token T_LINK T_REAL T_BOOL T_INT T_UPTO T_STRING T_ARRAY T_RECORD T_VECTOR T_POSITIVEDEFINITEMATRIX
+
+%left OR AND
+%nonassoc  EQ NEQ LT GT LTEQ GTEQ
+%nonassoc  NOT
+
+%left MINUS PLUS MAX 
+%left MULT DIV MOD
+%nonassoc  UMINUS
+
+// The start token becomes a parser function in the compiled code:
+%start Model
+%type < MicrosoftResearch.Infer.Tabular.Syntax.Model > Model
+
+%start Space
+%type <D> Space
+%start Constant
+%type < Constant > Constant
+%start ExpList
+%type < Exp list > ExpList
+%start Exp
+%type < Exp  > Exp
+%start Bindings
+%type < (VarName*Exp) list > Bindings
+%start Exp0
+%type < Exp  > Exp0
+%start ColumnType
+%type < ColumnType> ColumnType
+%start Level
+%type < Level> Level
+%start Visibility
+%type < Visibility> Visibility
+%start MarkupOf
+%type < MarkupOf > MarkupOf
+%start Markup
+%type < Markup > Markup
+%start TableId
+%type < MicrosoftResearch.Infer.Tabular.Syntax.TableId > TableId
+%start SimpleString
+%type < System.String > SimpleString
+%start ColumnName
+%type < System.String > ColumnName
+%start SettingsTableId
+%type < Microsoft.FSharp.Core.Unit > SettingsTableId
+%start EmptyCell
+%type < unit > EmptyCell
+%%
+
+// These are the rules of the grammar along with the F# code of the 
+// actions executed as rules are reduced.  In this case the actions 
+// produce data using F# data construction terms.
+
+
+EmptyCell:
+    | EOF     { () } 
+
+TableId: 
+    | FUNCTION COLON IDENT               { Fun($3)  } 
+    | FUNCTION IDENT                      { Fun($2)  } 
+    | IDENT LSQBRACKET IDENT RSQBRACKET   { Table($1,Some (FromColumn $3))   }
+    | IDENT                               { Table($1,None)      } 
+
+ColumnName :
+    | IDENT   { $1 } 
+
+SimpleString :
+    | IDENT   { $1 } 
+    | EOF     { "" } 
+
+SettingsTableId :
+    | SETTINGS { () } 
+
+
+
+
+Model:
+    | IDENT  LPAR RPAR                          { MCall   ($1,[])   } 
+    | IDENT  LPAR Bindings   RPAR               { MCall   ($1,$3)   } 
+    | Exp                                       { MExp    ($1)} 
+//    | LPAR Model RPAR                           { System.Console.WriteLine(sprintf "removed parenthesis %A" $2) 
+//                                                 $2                }
+//  | Exp    LSQBRACKET Exp1 LT Exp0 RSQBRACKET { MIndexed(MExp    ($1),$3,$5)      } 
+    | Model LSQBRACKET Exp1 LT Exp0 RSQBRACKET  { MIndexed($1,$3,$5)  }       
+	| Model LSQBRACKET Exp1 RSQBRACKET  { MIndexed($1,$3,Const (IntConst -1))  }   
+	|                              { MEmpty}           
+
+Bindings :
+    | IDENT EQ Exp                 { ($1,$3)::[]     }
+    | IDENT EQ Exp COMMA Bindings  { ($1,$3)::$5     }
+	
+
+Exp :
+    | Exp2                     {  $1                }
+//    | Exp2 MathRel Exp2       {  Prim($2,[$1;$3])  }
+
+Exp2 :
+    | Exp1                    {  $1                }
+	| Exp2 MULT   Exp2     {  Prim( Mult   ,[$1;$3]) }
+    | Exp2 DIV    Exp2     {  Prim( Div    ,[$1;$3]) }
+    | Exp2 MOD    Exp2     {  Prim( Mod    ,[$1;$3]) }
+    | Exp2 PLUS   Exp2     {  Prim( Plus   ,[$1;$3]) }
+    | Exp2 MINUS  Exp2     {  Prim( Minus  ,[$1;$3]) }
+    | Exp2 MAX    Exp2     {  Prim( Max    ,[$1;$3]) }
+    | Exp2 OR     Exp2     {  Prim( Or     ,[$1;$3]) }
+    | Exp2 AND    Exp2     {  Prim( And    ,[$1;$3]) }
+	| Exp2 EQ Exp2         {  Prim( Eq,[$1;$3])}
+    | Exp2 NEQ  Exp2       {  Prim(Neq,[$1;$3])      }
+    | Exp2 LT Exp2         {  Prim(Lt,[$1;$3])    }
+    | Exp2 GT Exp2         {  Prim(Gt,[$1;$3])        }
+    | Exp2 LTEQ Exp2       {  Prim(LtEq,[$1;$3])       }
+    | Exp2 GTEQ Exp2       {  Prim(GtEq,[$1;$3])      }
+	| NOT Exp2             {  Prim(Not,[$2])    }
+	| MINUS Exp2 %prec UMINUS {  Prim(Negate,[$2]) }
+
+Exp1 : 
+//    | Exp0 Lookup                             {  Subscript($1,$2)   }
+//    | Exp0 LSQBRACKET Exp  RSQBRACKET Lookup  {  Subscript(Subscript($1,$3),$5)   }
+    | Exp0 Lookup                             {  ($2) ($1)   }
+//    | Exp0 LSQBRACKET Exp  RSQBRACKET Lookup  {  ($5) (Subscript($1,$3))   }
+
+   // | Exp0                                    {  $1                 }
+
+Lookup : 
+    | DOT LSQBRACKET Exp  RSQBRACKET Lookup   {  (fun e1 -> $5(Subscript(e1,$3))) }
+    | DOT IDENT Lookup                        {  (fun e1 -> $3(DeRef(e1,"",$2))) }
+	| COLON ColumnType				      	  { (fun e1 -> Constraint(e1,$2)) }
+	|                                         {  (fun e1->  e1) }
+
+Exp0 :
+    | Constant                                           {  Const($1)         }
+	//| NOT Exp                                            {  Prim(Not,[$2])    }
+	//| MINUS Exp	                                         {  Prim(Negate,[$2]) }
+    | IF Exp THEN Exp ELSE Exp                           {  If($2,$4,$6)      }
+    | LSQBRACKET FOR IDENT LT Exp DOYIELD Exp RSQBRACKET {  ForLoop($3,$5,$7) }
+    | LSQBRACKET ExpList        RSQBRACKET               {  Array($2)         }
+    | DistOp LPAR ExpList  RPAR                          {  Dist($1,$3)       }
+    | LET IDENT EQ Exp IN Exp                            {  Let($2, $4, $6)   }
+    | SIZEOF LPAR IDENT   RPAR                           {  SizeOf($3)        }
+	| SCAN LPAR LPAR IDENT COMMA IDENT RPAR DOYIELD Exp COMMA Exp COMMA Exp RPAR 
+	                                                     {  Scan($4,$6,$9,$11,$13)        }
+    | LPAR Exp  RPAR                                    {  $2                }
+    | IDENT                                              {  Var($1)           }
+    | PRIMIDENT LPAR ExpList RPAR                        {  Prim(Factor(FactorName($1)), $3)    }
+	| INFER DOT DistOp LSQBRACKET ExpList  RSQBRACKET DOT IDENT LPAR Exp RPAR  { Infer($3,$5,$8,$10) }
+	| INFER DOT DistOp DOT IDENT LPAR Exp RPAR  { Infer($3,[],$5,$7) }
+
+Space :
+    | QRY {D.Qry}
+    | RND {D.R}
+    | DET {D.D}
+
+ColumnType :                                               
+    | T_LINK LPAR IDENT RPAR                              {T_Link($3)            }
+    | T_REAL                                              {T_Real                }
+    | T_BOOL                                              {T_Bool                }
+    | T_INT                                               {T_Int                 }
+    | T_UPTO Exp                                          {T_Upto ($2)           }
+    | MOD Exp                                             {T_Upto ($2)           } //TBR
+    | T_STRING                                            {T_String              }
+    | ColumnType LSQBRACKET Exp RSQBRACKET                {T_Array($1, $3)       }
+	| T_POSITIVEDEFINITEMATRIX	                          {T_PositiveDefiniteMatrix}
+    //| LSQBRACKET RecordMemberList  RSQBRACKET             {T_Record($2)          } //Adapt for enums?
+    | T_VECTOR                                            {T_Vector}
+	| ColumnType NOT Space                                {makeDet ($1) ($3)} //TBR
+RecordMemberList :                                               
+    | IDENT COLON  ColumnType                             {  ($1, $3)::[]      }
+    | IDENT COLON  ColumnType  COMMA RecordMemberList     {  ($1, $3)::$5      }
+
+Level : 
+    | STATIC                                              {Level.Static}
+	| INSTANCE                                            {Level.Instance}
+	|                                                     {Level.Instance} //default
+
+Visibility :
+    | INPUT	                                              {Visibility.In}
+	| LOCAL                                               {Visibility.Local}
+    | OUTPUT                                              {Visibility.Output true} // parse as latent output
+
+
+
+MarkupOf : 
+    | INPUT                        {  inputOf }
+    | LATENT                       { latentOf }
+    | OUTPUT                       {  outputOf  } 
+    | HYPER                        {  hyperOf }
+    | PARAM                        {  paramOf } 
+    | Level Visibility             {  markupOf ($1,$2) }
+
+Markup : 
+    | MarkupOf LPAR Model RPAR                       {  $1($3) }
+
+
+
+
+ExpList :
+    | Exp                      {   [$1]    }
+    | Exp COMMA ExpList        {  ($1)::$3    }
+    |                          {   []    }
+
+Constant : 
+    | INT                      {  IntConst($1)  }
+    | FLOAT                    {  RealConst($1) }
+    | BOOL                     {  BoolConst($1) }
+	| STRING				   {  StringConst($1) }
+
+//MathRel :
+//    | EQ        {  Eq         }
+//    | NEQ       {  Neq        }
+//    | LT        {  Lt         }
+//    | GT        {  Gt         }
+//    | LTEQ      {  LtEq       }
+//    | GTEQ      {  GtEq       }
+
+
+
+DistOp :    
+    | BETA                                                  {  Beta                                 }
+    | BETAFROMMEANANDVARIANCE                               {  BetaFromMeanAndVariance              }
+    | GAUSSIANFROMMEANANDPRECISION                          {  GaussianFromMeanAndPrecision         }
+    | GAUSSIANFROMMEANANDVARIANCE                           {  GaussianFromMeanAndVariance          }
+    | GAMMAFROMSHAPEANDSCALE                                {  GammaFromShapeAndScale               }
+    | GAMMAFROMMEANANDVARIANCE                              {  GammaFromMeanAndVariance             }
+    | GAMMAFROMSHAPEANDRATE                                 {  GammaFromShapeAndRate                }
+    | BINOMIAL                                              {  Binomial                             }
+    | VECTORGAUSSIANFROMMEANANDVARIANCE                     {  VectorGaussianFromMeanAndVariance    }
+    | VECTORGAUSSIANFROMMEANANDPRECISION                    {  VectorGaussianFromMeanAndPrecision   }
+    | DISCRETE                                              {  Discrete                             }
+    | DISCRETEUNIFORM                                       {  DiscreteUniform                      }
+    | POISSON                                               {  Poisson                              }
+    | BERNOULLI                                             {  Bernoulli                            }
+    | DIRICHLET                                             {  Dirichlet                            }
+    | DIRICHLETUNIFORM                                      {  DirichletUniform                     }
+    | DIRICHLETSYMMETRIC                                    {  DirichletSymmetric                   }
+    | WISHARTFROMSHAPEANDSCALE                              {  WishartFromShapeAndScale             }
+

@@ -1,0 +1,1 @@
+start  .\bin\TabularTaskPaneDNA-AddIn64.xll /B

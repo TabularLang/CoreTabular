@@ -1,0 +1,167 @@
+﻿{
+module Lexer
+open System
+open Parser
+open Microsoft.FSharp.Text.Lexing
+//TODO: don't lex prims and dists, use a hashtable instead
+let lexeme lexbuf = LexBuffer<char>.LexemeString lexbuf
+let removeQuotes (s: string) = s.Substring (1, s.Length - 2)
+let removeEscapeQuotes (s: string) = s.Substring (2, s.Length - 3)
+//http://plus.kaist.ac.kr/~shoh/ocaml/ocamllex-ocamlyacc/ocamllex-tutorial/sec-nested-comments.html
+}
+
+// Regular expressions for some classes of characters 
+let character = ['a'-'z'] | ['A'-'Z'] | '_'
+let digit = ['0'-'9']
+let charOrDigit = character | digit 
+let whitespace = [' ' '\t' ]
+let newline = ('\n' | '\r' '\n')
+
+
+// TODO: add escapes etc...
+//let stringContent = digit | character | whitespace | '.' 
+let stringContent = [^'\"']
+
+rule tokenize = parse
+| whitespace	 { tokenize lexbuf }
+| newline       { tokenize lexbuf }
+| '(''*'stringContent*'*'')'                    { tokenize lexbuf  }
+
+ 
+| "->" {DOYIELD}
+// Operators
+| "+"			{ PLUS }
+| "-"			{ MINUS }
+| "*"			{ MULT }
+| "/"			{ DIV }
+| "!"		   	{ NOT }
+| "max"			{ MAX }
+| "mod"			{ MOD }
+| "|"			{ OR }
+| "&"			{ AND }
+
+| "<="          { LTEQ }
+| ">="          { GTEQ }
+| "<>"          { NEQ  }
+| "<"           { LT   }
+| ">"           { GT   }
+| "="           { EQ   }
+
+| "Beta"                                            {  BETA                                         }      
+| "BetaFromMeanAndVariance"                         {  BETAFROMMEANANDVARIANCE                      } // short for
+| "Gaussian"                                        {  GAUSSIANFROMMEANANDVARIANCE                  } 
+| "GaussianFromMeanAndPrecision"                    {  GAUSSIANFROMMEANANDPRECISION                 }
+| "GaussianFromMeanAndVariance"                     {  GAUSSIANFROMMEANANDVARIANCE                  }
+| "Gamma"                                           {  GAMMAFROMSHAPEANDSCALE                       } // short for
+| "GammaFromShapeAndScale"                          {  GAMMAFROMSHAPEANDSCALE                       }
+| "GammaFromMeanAndVariance"                        {  GAMMAFROMMEANANDVARIANCE                     }  
+| "GammaFromShapeAndRate"                           {  GAMMAFROMSHAPEANDRATE                        }
+| "Binomial"                                        {  BINOMIAL                                     }
+| "VectorGaussianFromMeanAndVariance"               {  VECTORGAUSSIANFROMMEANANDVARIANCE            }
+| "VectorGaussianFromMeanAndPrecision"              {  VECTORGAUSSIANFROMMEANANDPRECISION           }
+| "Discrete"                                        {  DISCRETE                                     } 
+| "DiscreteUniform"                                 {  DISCRETEUNIFORM                              }
+| "Poisson"                                         {  POISSON                                      }
+| "Bernoulli"                                       {  BERNOULLI                                    }
+| "Dirichlet"                                       {  DIRICHLET                                    }
+| "DirichletUniform"                                {  DIRICHLETUNIFORM                             } 
+| "DirichletSymmetric"                              {  DIRICHLETSYMMETRIC                           }
+| "WishartFromShapeAndScale"                        {  WISHARTFROMSHAPEANDSCALE                     }
+| "WishartFromShapeAndRate"                         {  WISHARTFROMSHAPEANDRATE                     }
+
+|"Scan"                                            {  SCAN                     }
+|"SizeOf"                                          {  SIZEOF                     }
+
+//
+|"DampBackward"                                    {  PRIMIDENT(lexeme lexbuf)}
+|"Logistic"                                        {  PRIMIDENT(lexeme lexbuf)}
+|"Probit"                                          {  PRIMIDENT(lexeme lexbuf)}
+|"Sum"                                             {  PRIMIDENT(lexeme lexbuf)}
+|"Softmax"                                         {  PRIMIDENT(lexeme lexbuf)}
+|"DiagonalPDMatrix"                                          {  PRIMIDENT(lexeme lexbuf)}
+|"IdentityScaledBy"                                          {  PRIMIDENT(lexeme lexbuf)}
+|"InnerProduct"                                          {  PRIMIDENT(lexeme lexbuf)}
+|"VectorFromArray"                                          {  PRIMIDENT(lexeme lexbuf)}
+|"GetItems"                                          {  PRIMIDENT(lexeme lexbuf)}
+|"Subarray"                                          {  PRIMIDENT(lexeme lexbuf)}
+|"Exp"                                           {  PRIMIDENT(lexeme lexbuf)}
+|"Log"                                           {  PRIMIDENT(lexeme lexbuf)}
+|"BreakSymmetry"                                 {  PRIMIDENT(lexeme lexbuf)} 
+|"ArgMax"                                 {  PRIMIDENT(lexeme lexbuf)}
+|"ArgMin"                                 {  PRIMIDENT(lexeme lexbuf)}                    
+
+// Separators and special characters             
+| "("			{ LPAR }                             
+| ")"			{ RPAR }
+| "["           { LSQBRACKET }
+| "]"           { RSQBRACKET }
+| ","           { COMMA }
+| ":"           { COLON }
+| "@"           { AMPERSAND }
+
+// Keywords 
+| "if"          { IF }
+| "infer"          { INFER}
+| "then"        { THEN }
+| "else"        { ELSE }
+| "for"         { FOR }
+| "->"    { DOYIELD }
+| "true"        { BOOL(true)  }
+| "false"       { BOOL(false)  }
+| "let" {LET}
+| "in"  {IN}
+| "function"    {FUNCTION}
+| "settings"    {SETTINGS}
+| "Settings"    {SETTINGS}
+
+
+// ColumnType 
+| "link"       {T_LINK     }
+| "real"       {T_REAL     }   
+| "bool"       {T_BOOL     }
+| "int"        {T_INT      }
+| "upto"       {T_UPTO     } // see above for mod
+| "string"     {T_STRING   }
+| "vector"     {T_VECTOR   }
+| "PositiveDefiniteMatrix"     {T_POSITIVEDEFINITEMATRIX }
+
+
+// Markup
+| "input"            {INPUT      }
+| "latent"           {LATENT     }   
+| "output"           {OUTPUT }
+| "hyper"            {HYPER      }
+| "param"            {PARAM      }
+| "Input"            {INPUT      }
+| "Latent"           {LATENT     }   
+| "Output"           {OUTPUT }
+| "Hyper"            {HYPER      }
+| "Param"            {PARAM      }
+| "static"           {STATIC}
+| "instance"         {INSTANCE}
+| "inst"         {INSTANCE}
+| "local"            {LOCAL}
+| "Static"           {STATIC}
+| "Instance"         {INSTANCE}
+| "Inst"         {INSTANCE}
+| "Local"            {LOCAL}
+| "qry"              {QRY}
+| "rnd"              {RND}
+| "det"              {DET}
+
+
+// Numeric constants
+| ['-']?digit+									         { INT   (Int32.Parse (lexeme lexbuf, System.Globalization.CultureInfo.InvariantCulture)) }
+| ['-']?digit+('.'digit*)?(['e''E'](['-''+']?)digit+)?		{ FLOAT (Double.Parse(lexeme lexbuf, System.Globalization.CultureInfo.InvariantCulture)) }
+
+// Idents and keywords
+| (character)(charOrDigit*)                     { IDENT     (lexeme lexbuf) }
+| '#''\"'stringContent*'\"'                     { IDENT     (removeEscapeQuotes(lexeme lexbuf)) } //escaped identifier
+| '#'(character)(charOrDigit*)                  { PRIMIDENT (lexeme lexbuf) }
+| '\"'stringContent*'\"'                        { STRING    (removeQuotes(lexeme lexbuf)) }
+| "."           { DOT }
+
+
+// end of file 
+| eof   { EOF }
+
