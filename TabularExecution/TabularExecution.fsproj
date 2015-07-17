@@ -13,7 +13,7 @@
     <Name>TabularExecution</Name>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
-    <SccProjectName>$/pp/Tabular/TabularExecution</SccProjectName>
+    <SccProjectName>$/pp/CoreTabular/TabularExecution</SccProjectName>
     <SccProvider>{4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}</SccProvider>
     <SccAuxPath>http://vstfmsrc:8080/tfs/mlp</SccAuxPath>
     <SccLocalPath>.</SccLocalPath>
@@ -107,11 +107,6 @@
     <Reference Include="System.Xml.Serialization" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DataLayerExecution\DataLayerExecution.fsproj">
-      <Name>DataLayerExecution</Name>
-      <Project>{fcaaeb2d-e1f3-41b2-b962-c98c87516126}</Project>
-      <Private>True</Private>
-    </ProjectReference>
     <ProjectReference Include="..\DataLayerModel\DataLayerModel.fsproj">
       <Name>DataLayerModel</Name>
       <Project>{0271771d-2a8e-48f3-a2d3-cd0e4a06acb8}</Project>
@@ -120,11 +115,6 @@
     <ProjectReference Include="..\Tabular\Tabular.fsproj">
       <Name>Tabular</Name>
       <Project>{cdfb169a-3ca6-4e26-b61e-0a910f4bcd5d}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\TaskPaneVirtualProject\TaskPaneVirtualProject.fsproj">
-      <Name>TaskPaneVirtualProject</Name>
-      <Project>{b0617ae4-5ecd-45fa-a4ad-ac80d2b3ef1b}</Project>
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>

@@ -60,11 +60,6 @@
       <Project>{0d2aac5f-656f-48d6-8d8e-5401e031a94b}</Project>
       <Private>True</Private>
     </ProjectReference>
-    <ProjectReference Include="..\TabularModelLibrary\TabularModelLibrary.fsproj">
-      <Name>TabularModelLibrary</Name>
-      <Project>{da5fb590-3ea4-4bb5-8984-c4ef504b4ebb}</Project>
-      <Private>True</Private>
-    </ProjectReference>
     <ProjectReference Include="..\Tabular\Tabular.fsproj">
       <Name>Tabular</Name>
       <Project>{cdfb169a-3ca6-4e26-b61e-0a910f4bcd5d}</Project>

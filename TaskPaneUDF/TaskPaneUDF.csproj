@@ -64,12 +64,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\TaskPane\TaskPane.fsproj">
-      <Project>{39e8a4a7-8b94-47ee-88f6-122bdc19f5ee}</Project>
-      <Name>TaskPane</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="install.bat" />
     <None Include="postbuild.fsx" />
   </ItemGroup>

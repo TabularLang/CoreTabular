@@ -65,11 +65,6 @@
       <Project>{5f6ce5c9-3657-497d-b128-2076fb8fbd9c}</Project>
       <Private>True</Private>
     </ProjectReference>
-    <ProjectReference Include="..\TabularExcelTaskPaneWindows\TabularExcelTaskPaneWindows.fsproj">
-      <Name>TabularExcelTaskPaneWindows</Name>
-      <Project>{b4599a03-62ef-42f5-a2e6-cb284ab4938b}</Project>
-      <Private>True</Private>
-    </ProjectReference>
     <ProjectReference Include="..\TabularModelLibrary\TabularModelLibrary.fsproj">
       <Name>TabularModelLibrary</Name>
       <Project>{da5fb590-3ea4-4bb5-8984-c4ef504b4ebb}</Project>

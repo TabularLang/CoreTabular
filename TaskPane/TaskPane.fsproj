@@ -207,11 +207,6 @@ echo F | xcopy "$(ProjectDir)..\dependencies\ExcelDNA\ExcelDna.xll"       "$(Tar
       <Project>{5f6ce5c9-3657-497d-b128-2076fb8fbd9c}</Project>
       <Private>True</Private>
     </ProjectReference>
-    <ProjectReference Include="..\TabularExcelTaskPaneWindows\TabularExcelTaskPaneWindows.fsproj">
-      <Name>TabularExcelTaskPaneWindows</Name>
-      <Project>{b4599a03-62ef-42f5-a2e6-cb284ab4938b}</Project>
-      <Private>True</Private>
-    </ProjectReference>
     <ProjectReference Include="..\TabularExecution\TabularExecution.fsproj">
       <Name>TabularExecution</Name>
       <Project>{78697a20-1a1a-405f-a13e-79744331ba57}</Project>

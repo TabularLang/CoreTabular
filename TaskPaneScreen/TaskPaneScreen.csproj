@@ -97,16 +97,6 @@
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\TabularExcelTaskPaneWindows\TabularExcelTaskPaneWindows.fsproj">
-      <Project>{b4599a03-62ef-42f5-a2e6-cb284ab4938b}</Project>
-      <Name>TabularExcelTaskPaneWindows</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\TaskPaneModel\TaskPaneModel.fsproj">
-      <Project>{f4532845-59ab-42a8-82e7-1c1b32a88213}</Project>
-      <Name>TaskPaneModel</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -133,11 +133,6 @@
       <Project>{0271771d-2a8e-48f3-a2d3-cd0e4a06acb8}</Project>
       <Private>True</Private>
     </ProjectReference>
-    <ProjectReference Include="..\TaskPane\TaskPane.fsproj">
-      <Name>TaskPane</Name>
-      <Project>{39e8a4a7-8b94-47ee-88f6-122bdc19f5ee}</Project>
-      <Private>True</Private>
-    </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
     <PreBuildEvent>taskkill /F /FI "STATUS eq RUNNING" /IM EXCEL.exe</PreBuildEvent>

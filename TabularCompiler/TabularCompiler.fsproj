@@ -122,11 +122,6 @@
       <Project>{cdfb169a-3ca6-4e26-b61e-0a910f4bcd5d}</Project>
       <Private>True</Private>
     </ProjectReference>
-    <ProjectReference Include="..\TaskPaneVirtualProject\TaskPaneVirtualProject.fsproj">
-      <Name>TaskPaneVirtualProject</Name>
-      <Project>{b0617ae4-5ecd-45fa-a4ad-ac80d2b3ef1b}</Project>
-      <Private>True</Private>
-    </ProjectReference>
     <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <Private>True</Private>
     </Reference>
