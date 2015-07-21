@@ -98,9 +98,7 @@
     <Compile Include="Translate.fs" />
     <Compile Include="Compiler.fs" />
     <Compile Include="SymmetryBreaking.fs" />
-    <Compile Include="ExcelCompiler.fs">
-      <Link>ExcelCompiler.fs</Link>
-    </Compile>
+    <Compile Include="TabularCompiler.fs" />
     <Compile Include="CrossValidation.fs" />
   </ItemGroup>
   <ItemGroup>

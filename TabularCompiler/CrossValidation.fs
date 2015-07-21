@@ -5,14 +5,14 @@ module CrossValidation =
 
    
 
-    let USE_PARALLELISM = false // ExcelCompiler needs to be threadsafe first
+    let USE_PARALLELISM = false // Compiler needs to be threadsafe first
 
     open MicrosoftResearch.Infer.Tabular.Syntax
     open MicrosoftResearch.Infer
     open MicrosoftResearch.Infer.Distributions
     open MicrosoftResearch.Infer.Tabular
     open MicrosoftResearch.Infer.Tabular.TabularCompiler
-   // open MicrosoftResearch.Infer.Tabular.Compiler
+   
    
     let dbToKnowAndDist schema (db : TypedDTO.DataBase) = 
         let distDTO =  
