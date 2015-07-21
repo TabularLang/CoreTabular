@@ -11,7 +11,8 @@ type Log = Map<TableName,Table.Log>
 
 let logToString log =
                   Map.fold (fun s tb log -> 
-                            Map.fold (fun s col v -> match v with 
+                            Map.fold (fun s col v -> 
+                                      match v with 
                                       |  (Table.Err msg) -> s+(sprintf "\nTable %A, column %A:\n %A" (Pretty.ident tb) (Pretty.ident col) msg) 
                                       | _ -> s) s log) "" log
 
@@ -26,7 +27,7 @@ let elaborate(fullSchema:Schema) =
            // erase type annotations
            let fullSchema = Erase.schema typedFullSchema
            // reduce 
-          // System.Console.WriteLine(Pretty.schemaToStr fullSchema)
+           // System.Console.WriteLine(Pretty.schemaToStr fullSchema)
            let coreSchema = coreS fullSchema
            //System.Console.WriteLine("-----------")
            //System.Console.WriteLine(Pretty.schemaToStr coreSchema)

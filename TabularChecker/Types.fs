@@ -1,7 +1,6 @@
 module MicrosoftResearch.Infer.Tabular.Types
 open Syntax
 
-//type ExprType = ColumnType
 
 type Ident = string
 
@@ -47,27 +46,11 @@ type TableType = RecordType * RecordType * RecordType * RecordType * RecordType
 
 type SchemaType =   RecordType * RecordType * RecordType * RecordType * RecordType
 
-//type TableUntyped<'T>    = {Columns: List<ColumnName * ColumnTyped<'T>>}
-//and TableTyped<'T>    = TableUntyped<'T> * TableType
-//and ColumnTyped<'T>    = {Type:TargetType; Markup:'T}                            
-
-
-let EmptyRecordType : RecordType = []//T_Record ([])
+let EmptyRecordType : RecordType = []
 
 //shorthands
 let ERT = EmptyRecordType
 
-(*
-type TableT = TableTyped<MarkupTyped>
-
-type LibEntryUntyped = {CName: string; Table: TableT;  E: ExprTyped}
-type LibEntryTyped = LibEntryUntyped * ModelType
-
-type DatabaseType = TargetType * TargetType * TargetType * TargetType * TargetType
-type DatabaseUntyped<'T> = {Name: SchemaName; Tables: List<TableName * TableTyped<'T>>}
-type DatabaseTyped<'T> = DatabaseUntyped<'T> * DatabaseType
-type DatabaseT = DatabaseTyped<MarkupTyped>
-*)
 type Env = 
     G_Empty
   | G_Var of (Var * (TargetType * B)) * Env

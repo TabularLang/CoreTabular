@@ -235,14 +235,6 @@ module Syntax =
          | Hyper _ -> H 
          | Param _ -> W
          | _ -> Y
-
-//  let filter (t:Table) (b:B) = 
-//       match b with 
-//       | H -> t  |> List.choose (fun  ((cn,{Type=T;Markup=m}) as col)  -> Option.map (fun _ -> col) (H_Level m))
-//       | W -> t  |> List.choose (fun  ((cn,{Type=T;Markup=m}) as col)  -> Option.map (fun _ -> col) (W_Level m))
-//       | Y -> t  |> List.choose (fun  ((cn,{Type=T;Markup=m}) as col)  -> Option.map (fun _ -> col) (Y_Level m))
-
-       
   
 
   let DependsOnTables (table:Declaration)  = table |> getColumnsFromDec |> List.choose(fun (colname, col) -> match col.Type with | T_Link a -> Some a | _ -> None )
@@ -357,15 +349,6 @@ module Syntax =
 
   let substNC (ex,x) (nme,col) = (rename (ex,x) nme, substC (ex,x) col)
 
-  // transform from full Tabular to core Tabular
-  (*
-  let update_col e col =
-    match col with
-    | {Type=tau;Markup=Hyper(_)} -> {Type=tau;Markup=Hyper(e)}
-    | {Type=tau;Markup=Input} -> {Type=tau;Markup=Latent(MExp(e))}
-    | _ -> col
-  *)
-
     
   let update_col e col =
     match col with
@@ -377,12 +360,10 @@ module Syntax =
 
   // TODO: rewrite me inductively
   let beta (FE:Map<FunName,Table>) nme f args =
-    //let defn = match (GetTableByName s f) with
     let T1:Table = List.rev(FE.[f]) 
     let T2 = List.fold (fun (T:Table) (nme,e) -> List.map (fun(nme',col) -> nme', if nme=nme' then update_col e col else col) T) T1 args
     let (f',last),rest = List.head T2, List.rev (List.tail T2)
     if f <> f' && f' <> "ret" then failwith (sprintf "expected column %s but got %s" f f') else
-    //let exxs = List.map (fun(nme',_) -> (Var(sprintf "%s_%s" nme nme'), nme')) rest // the substitutions
     let exxs = List.map (fun col -> 
                          match col with
                          // inline Hypers
@@ -398,16 +379,6 @@ module Syntax =
         List.fold (fun T' (ex,x) -> List.map (substNC (ex,x)) T') T exxs
     (sigma rest, List.head (sigma [(nme, last)]))
 
-(*
-  let makeParam (nme,col) =
-    nme,
-    match col with
-    | {Type=tau;Markup=(Hyper _| Input) as m} -> failwithf "unexpected markup %A after beta" m
-    | {Type=tau;Markup=Param m} -> {Type=tau;Markup=Param(m)}
-    | {Type=tau;Markup=Latent m} -> {Type=tau;Markup=Param(m)}
-    | {Type=tau;Markup=Observable m} -> {Type=tau;Markup=Param(m)}
-*)
-
   let makeParam (nme,col) =
     nme,
     match col with
@@ -415,77 +386,7 @@ module Syntax =
     | {Type=tau;Markup=(Static,_,_) as mup} -> {Type=tau;Markup=mup}
     | {Type=tau;Markup=(Instance,((Local|Output true) as vis),m) as mup} -> {Type=tau;Markup=(Static,vis,m)} //FIXED
     | {Type=tau;Markup=(Instance,Output false,m)} -> {Type=tau;Markup=(Static,Output true,m)} // TBR
-(*
-  let rec indexT n (eIndex, eSize) T =
-      let i = sprintf "_i_%i" n
-      let recurse = indexT n (eIndex,eSize) 
-      match T with
-      | [] -> []
-      | ((nme,col) as dec)::T->
-         match col with
-         | {Type=tau;Markup=Hyper(_)} -> dec::(recurse T)
-         | {Type=tau;Markup=Input} -> dec::(recurse T)
-         | {Type=tau;Markup=Param(MExp(e))} ->
-           let T' = 
-              List.map (fun  nc ->
-                           match nc with
-                           | (name, {Type=tau;Markup=Param(e)}) -> 
-                                substNC (Subscript(Var nme,Var i),nme) nc
-                           | _ -> substNC (Subscript(Var nme,eIndex),nme) nc) T
-           (nme,{Type=T_Array(tau,eSize);Markup=Param(MExp( ForLoop(i,eSize,e)  ))})
-           ::
-           recurse T'
-         | {Type=tau;Markup=Latent(MExp(e))} -> 
-           (nme,{Type=tau;Markup=Latent(MExp  e)}) :: (recurse T)
-         | {Type=tau;Markup=Observable(MExp(e))} -> 
-           (nme,{Type=tau;Markup=Observable(MExp e)}) :: (recurse T)
-         |  _ -> failwith "indexC: not core Tabular"
-*)
 
-(*
-
-  let rec indexT C (n:int) (eIndex, eSize) T =
-      let hat c = c+"^"+n.ToString()
-      let ArgMax e1 = Prim(Prim.Factor(FactorName "ArgMax"),[e1])
-      let recurse = indexT C n (eIndex,eSize) 
-      match T with
-      | [] -> []
-      | ((nme,col) as dec)::T->
-         match col with
-         | {Type=tau;Markup=Input} -> dec::(recurse T)
-         | {Type=tau;Markup=Param(MExp(e))} when det tau = R ->
-           let i = fresh () // sprintf "_%s_%i" nme n
-           let sigma e = Set.fold (fun e' d -> substE (Subscript(Var d,Var i) , d) e') e C
-           (nme,{Type=T_Array(tau,eSize);Markup=Param(MExp( ForLoop(i,eSize,sigma e)  ))})
-           ::
-           (hat nme,{Type=tau;Markup=Latent(MExp(  (Subscript(Var nme,eIndex) )))})
-           ::
-           indexT (Set.add nme C) n (eIndex, eSize) T
-          | {Type=tau;Markup=Param(MExp(e))} when det tau = Qry ->
-           let i = fresh () // sprintf "_%s_%i" nme n
-           let sigma e = Set.fold (fun e' d -> substE (Subscript(Var d,Var i) , d) e') e C
-           (nme,{Type=T_Array(tau,eSize);Markup=Param(MExp( ForLoop(i,eSize,sigma e)  ))})
-           ::
-           (hat nme,{Type=tau;Markup=Latent(MExp(  (Subscript(Var nme,ArgMax(Infer(Discrete,[eSize],"probs",eIndex))))))
-                                                   })
-           ::
-           indexT (Set.add nme C) n (eIndex, eSize) T
-         | {Type=tau;Markup=Param(MExp(e))} when det tau = D ->
-           let sigma e = Set.fold (fun e' d -> substE (Var (hat d), d) e') e C
-           // assert (e = sigma e) up to alpha
-           (nme,{Type=tau;Markup=Param(MExp(sigma e))}) :: (recurse T)
-         | {Type=tau;Markup=Hyper e} -> 
-           let sigma e = Set.fold (fun e' d -> substE (Var (hat d), d) e') e C
-           //assert (e = sigma e) up to alpha
-           (nme,{Type=tau;Markup=Hyper(sigma e)}) :: (recurse T)
-         | {Type=tau;Markup=Latent(MExp(e))} -> 
-           let sigma e = Set.fold (fun e' d -> substE (Var (hat d), d) e') e C
-           (nme,{Type=tau;Markup=Latent(MExp  (sigma e))}) :: (recurse T)
-         | {Type=tau;Markup=Observable(MExp(e))} -> 
-           let sigma e = Set.fold (fun e' d -> substE (Var (hat d), d) e') e C
-           (nme,{Type=tau;Markup=Observable(MExp (sigma e))}) :: (recurse T)
-         |  _ -> failwith "indexC: not core Tabular"
-*)
   let rec indexT C (n:int) (eIndex, eSize) T =
       let hat c = c+"_"+n.ToString() // can't use ^ for (literal) extraction
       let ArgMax e1 = Prim(Prim.Factor(FactorName "ArgMax"),[e1])
@@ -515,45 +416,11 @@ module Syntax =
            let sigma e = Set.fold (fun e' d -> substE (Var (hat d), d) e') e C
            // assert (e = sigma e) up to alpha
            (nme,{Type=tau;Markup=(Static,vis,MExp(sigma e))}) :: (recurse T)
-     (*   subsumed by previous case?  
-         | {Type=tau;Markup=Hyper e} -> 
-           let sigma e = Set.fold (fun e' d -> substE (Var (hat d), d) e') e C
-           //assert (e = sigma e) up to alpha
-           (nme,{Type=tau;Markup=Hyper(sigma e)}) :: (recurse T)
-      *)
          | {Type=tau;Markup=(Instance,vis, MExp e)} -> 
            let sigma e = Set.fold (fun e' d -> substE (Var (hat d), d) e') e C
            (nme,{Type=tau;Markup=(Instance,vis, MExp (sigma e))}) :: (recurse T) 
-      (*          
-      subsumed by previous case?
-         | {Type=tau;Markup=Observable(MExp(e))} -> 
-           let sigma e = Set.fold (fun e' d -> substE (Var (hat d), d) e') e C
-           (nme,{Type=tau;Markup=Observable(MExp (sigma e))}) :: (recurse T)
-      *)
          |  _ -> failwith "indexC: not core Tabular"
 
-//  let rec morph n FE nc =
-//      match nc with
-//      | (nme, {Type=tau; Markup=Param(MCall(f,args) as m)}) ->
-//          match beta FE nme f args with
-//          | (T,(nme',{Type=tau';Markup=Observable(M)})) -> 
-//            List.map makeParam (T @ [(nme',{Type=tau';Markup=Observable(M)})])
-//      | (nme, {Type=tau; Markup=Observable(MCall(f,args) as m)}) ->
-//          match beta  FE nme f args with
-//          | (T,(nme',{Type=tau';Markup=Observable(M)})) -> T @ [(nme',{Type=tau';Markup=Observable(M)})]
-//      | (nme, {Type=tau; Markup=Latent(MCall(f,args))}) -> 
-//          match beta FE nme f args with
-//          | (T,(nme',{Type=tau';Markup=Observable(M)})) -> T @ [(nme',{Type=tau';Markup=Latent(M)})]
-//      | (nme, {Type=tau; Markup=Observable(MIndexed(M,eIndex,eSize))}) ->
-//        let T:Table = morph (n+1) FE (nme, {Type=tau; Markup=Observable(M)})
-//        indexT Set.empty n (eIndex,eSize) T
-//      | (nme, {Type=tau; Markup=Latent(MIndexed(M,eIndex,eSize))}) ->
-//        let T:Table = morph (n+1) FE (nme, {Type=tau; Markup=Latent(M)})
-//        indexT Set.empty n (eIndex,eSize) T
-//      | (nme, {Type=tau; Markup=Param(MIndexed(M,eIndex,eSize))}) -> 
-//        let T:Table = morph (n+1) FE (nme, {Type=tau; Markup=Latent(M)}) <- is this bug? shouldn't latent be Param?  or are relying on makeParam to follow
-//        List.map makeParam (indexT Set.empty n (eIndex,eSize) T)
-//      | (nme, col) -> [nme,col] // inlining param is a little harder
   let rec morph n FE nc =
       match nc with
       | (nme, {Type=tau; Markup=(Static,viz,MCall(f,args))}) ->
@@ -570,9 +437,10 @@ module Syntax =
         let T:Table = morph (n+1) FE (nme, {Type=tau; Markup=(Instance,vis,M)})
         indexT Set.empty n (eIndex,eSize) T
       | (nme, {Type=tau; Markup=(Static,((Local|Output _) as vis), MIndexed(M,eIndex,eSize))}) ->
-        let T:Table = morph (n+1) FE (nme, {Type=tau; Markup=(Instance,vis,M)}) //<- is this bug? shouldn't (Instance,vis) be (Static,vis)? or are relying on makeParam to follow
+        let T:Table = morph (n+1) FE (nme, {Type=tau; Markup=(Instance,vis,M)}) 
         List.map makeParam (indexT Set.empty n (eIndex,eSize) T)
       | (nme, col) -> [nme,col] 
+  
   let coreT (FE:Map<FunName,Table>) (T:Table):Table = List.concat (List.map (morph 0 FE) T)
  
   let coreS (S:Schema): Schema =

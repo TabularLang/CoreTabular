@@ -2,14 +2,6 @@
 
 namespace MicrosoftResearch.Infer.Tabular
 
-    
-//TODO:
-// complete missing expressions, factors and distributions
-// remove vestigial support for hypers
-// Program.fs
-// move tests and specific ExcelCompiler elsewhere to remove dependencies on DataLayer and MarkupFunlayer...  we should just depend on Infer.NET and pure Tabular
-// split typechecking from compilation - that's easy to do now.
-
 
 [<AutoOpen>]
 module Utils =
@@ -19,7 +11,6 @@ module Utils =
 
 
 module Compiler  =
-  
     
   open System.Reflection
   module T = Syntax
@@ -53,9 +44,11 @@ module Compiler  =
   | Lambdas (_ , e') -> getMethodFromExpr e'
   | Microsoft.FSharp.Quotations.Patterns.Call(_, m, _) -> m
   | e -> failwith "cannot extract method info from " e
+
   // custom factors 
   let dBF = System.Delegate.CreateDelegate(typeof<FactorMethod<double,double,double>>,getMethodFromExpr <@MicrosoftResearch.Infer.Factors.Damp.Backward<float>(0.0,0.0)@>)
             :?> FactorMethod<double,double,double>
+
   //let fm = new FactorMethod<double,double,double>(MicrosoftResearch.Infer.Factors.Damp.Backward<double>)
   let dampBackwardFactor : MicrosoftResearch.Infer.Models.Variable<float> * MicrosoftResearch.Infer.Models.Variable<float> -> MicrosoftResearch.Infer.Models.Variable<float> = 
         fun (v1,v2) -> 
@@ -70,9 +63,6 @@ module Compiler  =
     match f with 
         | Quotations.Patterns.Call(_,minfo,_) -> minfo.GetGenericMethodDefinition() 
         | _ -> failwith "fail"
-
-//  let v = Variable.Array<Variable.Array<int>,int [][]>
-
   let rec collapseType : ColumnType -> System.Type = function
     | T_Array (t,e) -> let t' = collapseType t in t'.MakeArrayType()
     | T_Int -> typeof<int>
@@ -145,7 +135,7 @@ module Compiler  =
           with 
           | _ -> v
 
-     member v.copy() = //variableCopy(v)
+     member v.copy() = 
        match v :> obj with
          | :? IVariableArray -> 
                 variableArrayCopy(v)
@@ -162,7 +152,8 @@ module Compiler  =
        | _ ->
           let _ = v.GetType().GetMethod("SetTo", [|w.GetType()|]).Invoke(v, [| w |]) 
           ()
-     //untested
+
+     
      member v.getObservedValue() =
             v.GetType().GetMethod("get_ObservedValue", [||]).Invoke(v,[||])
           
@@ -186,29 +177,7 @@ module Compiler  =
           let v = mi.Invoke(null,  [|v; w|] ) :?> Variable
           v.AddAttribute(new MarginalPrototype(null)) // this is a workaround for a bug in Infer.NET 2.5
           v
-     (*   
-     member v.observeValueMissing(observedIndices:int[],w:obj) =
-       match (v , w) with
-     (*  |  (:? Variable<int> as v),(:? int as w) ->
-          v.ObservedValue <- w
-       |  (:? Variable<bool> as v),(:? bool as w) ->
-          v.ObservedValue  <- w
-       |  (:? Variable<double> as v),(:? double as w) ->
-          v.ObservedValue  <- w*)
-       |  (v,w) when w.GetType().IsArray ->
-          let observedIndicesVar = Variable.Array<int>(Range(observedIndices.Length));
-          observedIndicesVar.ObservedValue <- observedIndices;
-         
-          let t = w.GetType().GetElementType()
-          let observed = 
-             let mi = getMethodFromExpr <@ MicrosoftResearch.Infer.Models.Variable.Subarray((null:VariableArray<int>), (null:VariableArray<int>)) @>
-             let mi = mi.GetGenericMethodDefinition().MakeGenericMethod([| t |])
-             mi.Invoke(null,  [|v; observedIndicesVar|] )
-          let v = observed :?> Variable
-          v.AddAttribute(new MarginalPrototype(null)) // this is a workaround for a bug in Infer.NET 2.5
-          let _ = observed.GetType().GetMethod("set_ObservedValue", [| w.GetType()|]).Invoke(observed, [| w |])
-          ()
-          *)
+     
      member va.assign(r:Range,w:Variable) =
        match (va,w) with
        |  (:? VariableArray<int> as v),(:? Variable<int> as w) ->
@@ -222,10 +191,6 @@ module Compiler  =
        |  (:? VariableArray<string> as v),(:? Variable<string> as w) ->
          v.[r] <- w
        | (v,w) ->
-//          let wType = typedefof<Variable<int>>.MakeGenericType(v.GetType().GetGenericArguments().[0])
-//          let m = v.GetType().GetMethod("set_Item", [| typeof<Range>; wType|])
-//          let _ =  m.Invoke(v, [| r; w |])
-//          ()
             let ms = v.GetType().GetProperties()
             let m = Array.find (fun (m:PropertyInfo) -> m.Name = "Item" && 
                                                         m.GetIndexParameters().[0].ParameterType = typeof<Range>) ms
@@ -244,19 +209,13 @@ module Compiler  =
          v.[i] <- w
        |  (:? VariableArray<string> as v),(:? Variable<string> as w) ->
          v.[i] <- w
-     //  |  (:? VariableArray<VariableArray<double>,double[][]> as v),(:? Variable<double[]> as w) ->
-     //    let wa = (w :?> VariableArray<double>)
-     //    v.[i] <- wa
        | (v,w) ->
             let ms = v.GetType().GetProperties()
             let m = Array.find (fun (m:PropertyInfo) ->  m.Name = "Item" && 
                                                          m.GetIndexParameters().[0].ParameterType = typeof<Variable<int>>) ms
             let r =  m.SetValue(v,w, [| i |])
             ()
-         // let wType = typedefof<Variable<int>>.MakeGenericType(v.GetType().GetGenericArguments().[0])
-         // let m = v.GetType().GetMethod("set_Item", [| typeof<Variable<int>>; wType|])
-         // let _ =  m.Invoke(v, [| i; w |])
-         // ()
+      
 
 
   let interp_Gt (v:Variable,w:Variable) = 
@@ -355,7 +314,6 @@ module Compiler  =
                  (VE:Map<v,Variable>)
                  (AE:Map<v,Variable>) p es : Variable = 
         let interp = interpE RE VE AE
-        //TBC with missing primitives
         match (p,es) with
         | Prim.Gt,[e1;e2] -> interp_Gt (interp e1, interp e2)
         | Prim.Lt,[e1;e2] -> interp_Lt (interp e1, interp e2)
@@ -431,20 +389,20 @@ module Compiler  =
                 mat.SetDiagonal(Maths.Vector.FromArray(v1.ObservedValue)) |> ignore
                 Variable.Constant<Maths.PositiveDefiniteMatrix>(mat):> Variable
            | _ -> failwith "NFI: DiagonalPDMatrix"            
-        | Prim.Factor(FactorName "IdentityScaledBy"),[e1;e2]->  // I doubt this will work...
+        | Prim.Factor(FactorName "IdentityScaledBy"),[e1;e2]->  
             match (interp e1,interp e2) with
             |  (:? Variable<int> as v1),
                (:? Variable<double> as v2) when ( v1.IsObserved && v2.IsObserved) ->
                 Variable.Constant<Maths.PositiveDefiniteMatrix>(Maths.PositiveDefiniteMatrix.IdentityScaledBy(v1.ObservedValue,v2.ObservedValue)) :> Variable
             | _ -> failwith "NFI: IdentityScaledBy"
        (*
-        | Prim.Factor(FactorName "GetItems"),[e1;e2]->  // I doubt this will work...
+        | Prim.Factor(FactorName "GetItems"),[e1;e2]->  
             let v = interp e1
             let w = interp e2
             let m = typeof<Variable>.GetGenericMethod("GetItems", [|  v.GetType().GetGenericArguments().[0]|])
             let _ =  m.Invoke(v, [| i; w |])
             ()
-        | Prim.Factor(FactorName "SubArray"),[e1;e2]->  // I doubt this will work...
+        | Prim.Factor(FactorName "SubArray"),[e1;e2]-> 
             let v = interp e1
             let w = interp e2
             let m = typeof<Variable>.GetGenericMethod("GetItems", [|  v.GetType().GetGenericArguments().[0]|])
@@ -467,12 +425,7 @@ module Compiler  =
                  (AE:Map<v,Variable>) d es : Variable = 
         let interp = interpE RE VE AE
         match (d,es) with
-        //TBC with missing distribution
-       // | T.DiscreteUniform, [ Const n] -> //TBR 
-          // Variable.DiscreteUniform([|for i in 0 .. n-1 -> 1.0 / (double) n |]) :> Variable
-      //    Variable.DiscreteUniform(n) :> Variable
-        | T.DiscreteUniform, [ e1] -> //TBR 
-          // Variable.DiscreteUniform([|for i in 0 .. n-1 -> 1.0 / (double) n |]) :> Variable
+        | T.DiscreteUniform, [ e1] -> 
           Variable.DiscreteUniform(interp e1 :?> Variable<int>) :> Variable
         | T.GaussianFromMeanAndPrecision,[e1;e2] -> 
            Variable.GaussianFromMeanAndPrecision(interp e1 :?> Variable<double>, interp e2 :?> Variable<double>) :> Variable
@@ -500,9 +453,8 @@ module Compiler  =
            :> Variable
         | T.Dirichlet, [Rng r;e1] ->
            let v1 = interp e1
-           Variable.Dirichlet( RE.[r],Variable.Vector(v1:?>Variable<float[]>) (*:?>Variable<Maths.Vector>*)) :> Variable
+           Variable.Dirichlet( RE.[r],Variable.Vector(v1:?>Variable<float[]>)) :> Variable
         | T.DirichletUniform, [Rng r] ->
-           // Variable.DirichletUniform( RE.[r]) :> Variable // this fails to compile - see \mlp\pp\sandbox\DirichletUniformBug\
            Variable.DirichletSymmetric( RE.[r],Variable.Constant(1.0)) :> Variable
         | T.DirichletSymmetric, [Rng r;e1] ->
            let v1 = interp e1
@@ -514,7 +466,7 @@ module Compiler  =
         | T.WishartFromShapeAndRate, [e1;e2] -> 
             Variable.WishartFromShapeAndRate(interp e1 :?> Variable<float>,interp e2 :?> Variable<Maths.PositiveDefiniteMatrix>) :> Variable
 
-  //TODO: we could probably merge AE and VE.
+  //TODO: merge AE and VE
   and interpE (RE:Map<r,Range>)
                  (VE:Map<v,Variable>)
                  (AE:Map<v,Variable>) e : Variable =
@@ -528,7 +480,6 @@ module Compiler  =
         | Const (StringConst s) ->  Variable.Constant<string>(s) :> Variable
         | Prim(p,es) -> interpPrim RE VE AE p es
         | Dist(d,es) ->  interpDist RE VE AE d es
-        //this is a terrible hack
         | IndexRng (e1,rv) -> 
            match (interp e1,RE.[rv]) with
            |  v1, r -> 
@@ -540,41 +491,11 @@ module Compiler  =
         | InitialiseTo(e1,d) ->
             let v1 = interp e1 
             initializeTo d v1
-             
-           
-  
-  
 
-
-  
   let isArray t = 
       match t with 
       | T_Array _ -> true 
-      | _ -> false
-(*
-  let rec newVariable (t: ColumnType)  : Variable =
-      match t with
-          | T_Int -> Variable.New<int>() :> Variable
-          | T_Bool -> Variable.New<bool>() :> Variable
-          | T_Real -> Variable.New<real>() :> Variable
-          | T_Link t -> 
-               let v = Variable.New<int>():> Variable
-               v.SetValueRange(RE.[range(t)])
-               v
-          | T_Array (e,t) when not(isArray t)-> 
-
-      | T_Int , [] -> variableNew t 
-
-      | TArray (TSimple t), [r] -> 
-        newVariableArray t r
-      | TArray t, r :: rs' -> 
-        let va = newVar t rs' 
-        newVariableArrayWithPrototype (collapseType (TArray t)) va r
-      | _ -> failwithf "newval: unexpected ranges and/or type %A, %O" rs t
-
-  *)
-  
-  
+      | _ -> false  
   
   let rec VariableNew (RE:Map<r,Range>)  t =
           match t with
@@ -602,9 +523,7 @@ module Compiler  =
                            | TypedExp(T.SizeOf tn,_)-> rangeOf(RSizeOf tn,depth t)
                            | _ -> failwithf "BUG: array type with %A with  non-constant size" t 
                let ve = VariableNew RE u 
-               //let r = RE.[rangeOf i]
-               let va = newVariableArray (collapseType u) RE.[r] //(RE.[r].Clone())
-               //va.SetValueRange(ve.GetValueRange(false))
+               let va = newVariableArray (collapseType u) RE.[r] 
                setAnyValueRange va ve
                va
           | T_Array (u,e) when isArray(u)-> 
@@ -613,9 +532,7 @@ module Compiler  =
                            | TypedExp(T.SizeOf tn,_)-> rangeOf(RSizeOf tn,depth t)
                            | _ -> failwithf "BUG: array type with %A with  non-constant size" t 
                let ve = VariableNew RE u 
-              // let r = RE.[rangeOf i]
-               let va = newVariableArrayWithPrototype (collapseType t) ve RE.[r] //(RE.[r].Clone())
-              // va.SetValueRange(ve.GetValueRange(false))
+               let va = newVariableArrayWithPrototype (collapseType t) ve RE.[r] 
                setAnyValueRange va ve
                va
           
@@ -641,10 +558,9 @@ module Compiler  =
                let v = Variable.Array<int>(r):> Variable
                v.SetValueRange(RE.[rangeOf (RSizeOf t,0)])
                v
-          | T_Array (u,(*(TypedExp(T.Const (IntConst i),_)) *)_) -> 
+          | T_Array (u,_) -> 
               let ve = VariableNew RE t
-              let va = newVariableArrayWithPrototype ((collapseType t).MakeArrayType()) ve r //(r.Clone())
-              //va.SetValueRange(ve.GetValueRange(false))
+              let va = newVariableArrayWithPrototype ((collapseType t).MakeArrayType()) ve r 
               setAnyValueRange va ve
               va
          
@@ -656,8 +572,6 @@ module Compiler  =
   let rec interpS (RE:Map<r,Range>)
                   (VE:Map<v,Variable>)
                   (AE:Map<v,Variable>) s = 
-       //let sprintf fmt k = "\n"+tab+(sprintf fmt k)
-       
        match s with
        | CloneRng(s,r) ->
           let rng = RE.[r].Clone()
@@ -669,7 +583,6 @@ module Compiler  =
           (RE.Add(r,rng),VE,AE) 
        | LetVar (v,e) -> 
           let ve = (interpE RE VE AE e).named v
-         // let ve = ve.Named(v)
           (RE,VE.Add(v,ve),AE) 
        | LetNew (v,t) ->
           let ve = (VariableNew RE t).named v
@@ -680,7 +593,7 @@ module Compiler  =
        | ObserveValue(v,t,o) ->
           let ve = if AE.ContainsKey v  then AE.[v] else VE.[v] // TODO: merge AE and VE
           ve.observeValue(o)
-          (RE,VE,AE) // ve.ObserveValue
+          (RE,VE,AE) 
        | Assign (v,r,E) -> 
           let ve = interpE RE VE AE E
           let va = if AE.ContainsKey v then AE.[v] else VE.[v] // TODO: merge AE and VE
@@ -761,517 +674,3 @@ module Compiler  =
       let (RE,VE,AE) = interpS Map.empty Map.empty Map.empty s
       b.CloseBlock()
       (e,(RE,VE,AE))
-
-  // compile a schema to a reusable inference function
-  let compile (fullSchema: T.Schema) =
-      let (log,err,(typedCoreSchema,schemaType)) = Elaborator.elaborate(fullSchema)
-      let errors = Map.fold (fun s tb log -> Map.fold (fun s col v -> 
-                                                     match v with 
-                                                     |  (Table.Err msg) ->
-                                                      s+(sprintf "\n %A %A : %A" tb col msg)
-                                                     | _ -> s) 
-                                                     s log)
-
-                          "" log
-      System.Console.WriteLine(errors)
-      if err then failwithf "type-checking error %A" log   
-      System.Console.WriteLine(Pretty.schemaToStr typedCoreSchema)
-      let s = trSchema(typedCoreSchema)
-      let cs = Pretty.StoString "\n" s
-      printfn "%s\n" cs
-      let (evidence,(RE,VE,AE)) = interpM  s
-      let ie = new InferenceEngine()
-     // ie.ShowMsl <- true
-      ie.ShowTimings <- true
-      ie.ShowProgress <- false
-      ie.NumberOfIterations <- 10
-      //WARNING: this code needs to be brought into sync with ExcelCompiler's inference.
-      let infer (TE:Map<TableName,int * Map<ColumnName,System.Array>>) =
-        let rec trTables tables = 
-          match tables with
-          | [] -> ()
-          | ((Declaration(Table (tn,_), table))::tables) -> 
-            let s = size tn
-            VE.[s].observeValue(fst(TE.[tn]))
-            let rec trColumns  columns   =
-              match columns with
-              |  [] -> 
-                trTables tables
-              | (cn,{Type=ty;Markup=m})::rest ->  
-                let r = range(tn)
-                match m with
-                | Hyper _ -> 
-                  ()
-                | Param _ ->
-                  ()
-                | Input ->
-                  let av = AE.[col(tn,cn)]
-                  av.observeValue(snd(TE.[tn]).[cn])   
-                | Latent _ ->
-                  ()
-                | Observable _ -> 
-                  let av = AE.[col(tn,cn)]
-                  av.observeValue(snd(TE.[tn]).[cn])   
-                trColumns rest  
-            trColumns table
-        trTables typedCoreSchema //db.Tables
-        let vsToInfer = Map.fold (fun vs n (v:Variable) ->  if true || (not(v.IsObserved)) then ((v:>IVariable)::vs) else vs) [evidence:>IVariable] VE
-        let vsToInfer = Map.fold (fun vs n (v:Variable) ->  if true || (not(v.IsObserved)) then ((v:>IVariable)::vs) else vs) vsToInfer AE
-        ie.OptimiseForVariables <- List.toArray(vsToInfer)
-        let eD = ie.Infer<Bernoulli>(evidence)
-      //  let VD,AD = Map.map(fun n (v:Variable) -> if (not(v.IsObserved)) then ie.Infer(v) else null ) VE, Map.map(fun n (v:Variable) -> if (not(v.IsObserved)) then ie.Infer(v) else null) AE
-        let VD,AD = Map.fold(fun (VD:Map<v,obj>) n (v:Variable) -> if (not(v.IsObserved)) then VD.Add(n,ie.Infer(v)) else VD ) Map.empty VE,
-                    Map.fold(fun (AD:Map<v,obj>) n (v:Variable) -> if (not(v.IsObserved)) then AD.Add(n,ie.Infer(v)) else AD) Map.empty AE
-       // printfn "evidence %A" eD
-       // printfn "%A %A" VD AD
-        (eD,(VD,AD))
-      infer
-      
-  let array (a:'T[]) : System.Array = a :> System.Array
-
-  let mkData numPlayers numMatches =
-      let dSkills =  new Distributions.Gaussian(0.0,1.0)
-      let v = [| for i in 0 .. numPlayers - 1 -> 1.0/(float) numPlayers|]
-      let dPlayers = if numPlayers > 0 then new Distributions.Discrete(v) else null
-      let skills = [| for i in 0 .. numPlayers - 1 -> dSkills.Sample() |]
-      let player1 = [| for i in 0 .. numMatches-1 -> dPlayers.Sample() |]
-      let player2 = [| for i in 0 .. numMatches-1 -> dPlayers.Sample() |]
-      let player1Wins =  [| for i in 0 .. numMatches-1 -> (new Distributions.Gaussian(skills.[player1.[i]],1.0)).Sample() >  (new Distributions.Gaussian(skills.[player2.[i]],1.0)).Sample() |]
-      let data = 
-        Map.ofList
-          [("Players", (numPlayers,Map.empty));
-           ("Matches", (numMatches,(Map.ofList([("Player1",array player1 );
-                                                ("Player2",array player2 );
-                                                ("Player1Wins",array player1Wins)
-                                      ]))))]
-      data
-
-
-
-  let testTrueSkillWithConjugate numPlayers numMatches =
-     
-      let schema =
-       [Declaration(Table("Players",  None),
-              ["Precision",{Type=T_Real; Markup=Hyper(T.Const(T.RealConst 10.))};
-              // "Mean",
-              //       {Type=T_Real; Markup=Param(MCall("CGaussian",[]))};
-               "Skill",
-                     {Type=T_Real; Markup=Latent(MCall("CGaussian",[]))}]);
-        Declaration(Table("Matches",  None),
-                       ["Player1", {Type=T_Link "Players"; Markup=Input};
-                        "Player2", {Type=T_Link "Players"; Markup=Input};
-                        "Perf1",   {Type=T_Real; Markup=Latent(MExp(T.Dist(GaussianFromMeanAndPrecision,[DeRef(T.Var "Player1", "Players", "Skill"); T.Const(T.RealConst 1.0)])))};
-                        "Perf2",   {Type=T_Real; Markup=Latent(MExp(T.Dist(GaussianFromMeanAndPrecision,[DeRef(T.Var "Player2", "Players", "Skill"); T.Const(T.RealConst 1.0)])))};
-                        "Player1Wins" ,   {Type=T_Bool; Markup=Observable(MExp(T.Prim(Gt, [T.Var "Perf1"; T.Var "Perf2"])))} ]) ]
-
-      //compile once
-      let infer = time "compile" compile (schema)
-      
-      let data1 = mkData numPlayers numMatches
-      //time "infer" infer data1
-
-      let (e,(VD,AD)) = time "infer" infer data1
-      printfn "Log Evidence: %O" e.LogOdds
-      Map.iter (fun k v -> printfn "Variable %O\n-------------------------------\n%O" k v) VD
-      Map.iter (fun k v -> printfn "Array %O\n-------------------------------\n%O" k v) AD
-
-  let testTrueSkillWithHyperAndParam numPlayers numMatches =
-     
-      let schema =
-       [Declaration(Table("Players",  None),
-              ["Precision",{Type=T_Real; Markup=Hyper(T.Const(T.RealConst 10.))};
-               "Mean",
-                     {Type=T_Real; Markup=Param(MCall("CGaussian",[]))};
-               "Skill",
-                     {Type=T_Real; Markup=Latent(MExp(T.Dist(GaussianFromMeanAndPrecision,[T.Var "Mean"; T.Var "Precision"])))}]);
-        Declaration(Table("Matches",  None),
-                       ["Player1", {Type=T_Link "Players"; Markup=Input};
-                        "Player2", {Type=T_Link "Players"; Markup=Input};
-                        "Perf1",   {Type=T_Real; Markup=Latent(MExp(T.Dist(GaussianFromMeanAndPrecision,[DeRef(T.Var "Player1", "Players", "Skill"); T.Const(T.RealConst 1.0)])))};
-                        "Perf2",   {Type=T_Real; Markup=Latent(MExp(T.Dist(GaussianFromMeanAndPrecision,[DeRef(T.Var "Player2", "Players", "Skill"); T.Const(T.RealConst 1.0)])))};
-                        "Player1Wins" ,   {Type=T_Bool; Markup=Observable(MExp(T.Prim(Gt, [T.Var "Perf1"; T.Var "Perf2"])))} ]) ]
-
-      //compile once
-      let infer = time "compile" compile (schema)
-      
-      let data1 = mkData numPlayers numMatches
-      //time "infer" infer data1
-
-      let (e,(VD,AD)) = time "infer" infer data1
-      printfn "Log Evidence: %O" e.LogOdds
-      Map.iter (fun k v -> printfn "Variable %O\n-------------------------------\n%O" k v) VD
-      Map.iter (fun k v -> printfn "Array %O\n-------------------------------\n%O" k v) AD
-//
-//  let testCSoftTrueSkill numPlayers numMatches =
-//      let db = TrueSkill.Schema
-//
-//      //compile once
-//      let infer = time "compile" compile (OldToNew.trSchema(db))
-//      
-//      let data1 = mkData numPlayers numMatches
-//      time "infer" infer data1
-//
-//
-      
-//  
-//
-//  let testCSoftTrueSkillMultiple numPlayers numMatches =
-//      let db = TrueSkill.Schema
-//
-//      //compile once
-//      let infer = compile (OldToNew.trSchema(db))
-//
-//       // infer several times with different data and no-recompile
-//      let data1 = mkData 0 0
-//      ignore(infer data1)
-//      
-//     
-//      let data1 = mkData numPlayers numMatches
-//      ignore(infer data1)
-//
-//      let data2 = mkData (numPlayers*2) (numMatches*2)
-//      ignore(infer data2)
-//  
-//  
-//  let testCSoftTrueSkillScales numPlayers numMatches =
-//      let db = TrueSkill.Schema
-//      let infer = compile (OldToNew.trSchema(db))
-//
-//
-//      let data1 = mkData 10 10
-//      ignore(infer data1) // JIT once
-//      
-//      
-//      let s = new System.Diagnostics.Stopwatch();
-//      let cp = System.Diagnostics.Process.GetCurrentProcess();
-//      printfn "Players,Matches,Time_ms,PeakWorkingSet_MB"
-//      let rec scale numMatches = 
-//        printf "%A,%A," numPlayers numMatches 
-//        let data1 = mkData numPlayers numMatches
-//        s.Reset();
-//        s.Start()
-//        ignore(infer data1)
-//        s.Stop()
-//        cp.Refresh()
-//        let pM = cp.PeakWorkingSet64
-//        printfn "%A,%A" (System.Convert.ToInt32(s.ElapsedMilliseconds)) (System.Convert.ToInt32(pM/ (1024L*1024L)))
-//        scale (numMatches * 10) 
-//      scale (numMatches)
-
-//  open OldService
-//  let testDAREUI()  =
-//  
-//
-//    let db = (DAREEval.DAREUI)
-//    printfn "%O" (Tabular.dataBaseToTex db)
-//    
-//    let loader = new DAOLoader(__SOURCE_DIRECTORY__ + "\..\MarkupFunLayer\DARE.accdb")
-//   
-//    let concreteData, posToID = readTable loader db
-//    
-//
-//    let size t = 
-//       let m,os = concreteData.[t]
-//       Seq.length(os)
-//
-//    let column (dummy:'T) t c = 
-//           let m,os = concreteData.[t]
-//           (c,([| for o in os -> o.[m.[c]] :?> 'T |] :> System.Array))
-//
-//    let data = 
-//        Map.ofList
-//          [("Participants",(size "Participants",Map.empty));
-//           ("Questions", (size "Questions",Map.empty));
-//           ("QuestionsTrain", (size "QuestionsTrain",Map.ofList([column 0 "QuestionsTrain" "QuestionID";
-//                                                                 column 0 "QuestionsTrain" "Answer"])))
-//           ("Responses", (size "Responses",Map.ofList([column 0 "Responses" "QuestionID";
-//                                                         column 0 "Responses" "ParticipantID"])));
-//           ("ResponsesTrain", (size "ResponsesTrain",Map.ofList([column 0 "ResponsesTrain" "ResponseID";
-//                                                                 column 0 "ResponsesTrain" "Answer"])))];
-//              
-//    let infer = compile  (OldToNew.trSchema db)
-//
-//    
-//    infer data
-//      
-//     
-//  
-//  let testRecommender() = 
-//      
-//      let db = PureRecommender.SchemaWithUpto
-//   (* this version adds a latent CGaussian index model to check whether compound parameters are compiled correctly for indexed models
-//      let db = 
-//       let Const = T.Const
-//       {Name = "MovieRatingsWithUpto";
-//        Tables = [ "Users",   {Columns=["UserCluster",   {Type=T_Upto(Const 4);          Markup=Latent(CDiscreteWith(Const 4))};
-//                                        "IsMale",        {Type=T_Bool;                   Markup=Observable(Array(CBernoulli,[Column "UserCluster"]))};
-//                                        "Age",           {Type=T_Upto(Const 100);        Markup=Observable(Array(CDiscreteWith(Const 100),[Column "UserCluster"]))} ]}
-//                   "Movies",  {Columns=["MovieCluster",  {Type=T_Upto(Const 4);          Markup=Latent(CDiscreteWith(Const 4))};
-//                                        "Category",      {Type=T_Upto(Const 20);         Markup=Observable(Array(CDiscreteWith(Const 20),[Column "MovieCluster"])) };
-//                                        "Year",          {Type=T_Upto(Const 100);        Markup=Observable(Array(CDiscreteWith(Const 100),[Column "MovieCluster"])) } ]};
-//                   "Ratings", {Columns=["UserID",        {Type=T_Link "Users";           Markup=Input};
-//                                        "MovieID",       {Type=T_Link "Movies";          Markup=Input};
-//                                        "Rating",        {Type=T_Upto(Const 6);          Markup=Observable(Array(CDiscreteWith(Const 5), [Deref("UserID", Column "UserCluster"); 
-//                                                                                                                                          Deref("MovieID", Column "MovieCluster")]))};
-//                                        "Score",         {Type=T_Real;                   Markup=Latent(Array(CGaussian, [Deref("UserID", Column "UserCluster"); 
-//                                                                                                                            Deref("MovieID", Column "MovieCluster")]))}                                                                                        
-//                                        ]}    
-//       ]}
-//    *)
-//     // let s = trDatabase(db)
-//      
-//      
-//   //   let (RE,VE,AE) = interpS Map.empty Map.empty Map.empty s
-//      let sizeUserClusters = 4
-//      let sizeMovieClusters = 4
-//      let users = 10
-//      let movies = 200
-//      let ratings = users * 50
-//      let dusers = new Distributions.Discrete([| for i in 0..users-1 -> 1.0/(float) users |])
-//      let dmovies = new Distributions.Discrete([| for i in 0..movies-1 -> 1.0/(float) movies |])
-//      let duserCluster = new Distributions.Discrete([| for i in 0..sizeUserClusters-1 -> 1.0/(float) sizeUserClusters |])
-//      let dmovieCluster = new Distributions.Discrete([| for i in 0..sizeMovieClusters-1 -> 1.0/(float) sizeMovieClusters |])
-//      let userClusters = [| for i in 0..users-1 -> duserCluster.Sample()|]
-//      let movieClusters = [| for i in 0..movies-1 -> dmovieCluster.Sample()|]
-//      let disMale = [| for i in 1 .. sizeUserClusters-> new Distributions.Bernoulli((float) i * 0.25) |]
-//      let dAge = [| for i in 1 .. sizeUserClusters -> Distributions.Discrete.UniformInRange(100,(i-1)*25,i*25-1) |] 
-//      let dCategory =  [| for i in 1 .. sizeMovieClusters -> Distributions.Discrete.UniformInRange(20,(i-1) * (20/sizeMovieClusters),i * (20/sizeMovieClusters)-1) |]
-//      let dYear =  [| for i in 1 .. sizeMovieClusters -> Distributions.Discrete.UniformInRange(100,(i-1) * (100/sizeMovieClusters),i * (100/sizeMovieClusters)-1) |]
-//      let dRatingss = [| for i in 0 .. sizeUserClusters-1 -> [| for j in 0 .. sizeMovieClusters-1 ->
-//                                                                let diff = System.Math.Abs(i-j)
-//                                                                Distributions.Discrete.UniformInRange(5,diff,diff+1) |] |]
-//       //compile once
-//      let infer = time "compile" compile  (OldToNew.trSchema(db))
-//      
-//      let data = 
-//        Map.ofList
-//          [("Users",(users,Map.ofList([("IsMale",[|for i in 0..users-1-> disMale.[userClusters.[i]].Sample()  |]:> System.Array)
-//                                       ("Age",[|for i in 0..users-1-> dAge.[userClusters.[i]].Sample()  |]:> System.Array)
-//                                       ("TrueUserCluster",userClusters:>System.Array)
-//                                      ])));
-//           ("Movies", (movies,Map.ofList([("Category",[|for i in 0..movies-1-> dCategory.[movieClusters.[i]].Sample()  |]:> System.Array)
-//                                          ("Year",[|for i in 0..movies-1-> dYear.[movieClusters.[i]].Sample()  |]:> System.Array)
-//                                          ("TrueMovieCluster",movieClusters:>System.Array)
-//                                      ])));
-//           (let userIDs =  [|for i in 1..ratings-> dusers.Sample()  |]
-//            let movieIDs = [|for i in 1..ratings-> dmovies.Sample()  |]
-//            ("Ratings", (users*50,Map.ofList([("UserID",userIDs:> System.Array);
-//                                             ("MovieID",movieIDs:> System.Array);
-//                                             ("Rating",[|for i in 0..ratings-1-> (dRatingss.[userClusters.[userIDs.[i]]].[movieClusters.[movieIDs.[i]]]).Sample() |]:> System.Array)
-//                                            ]))))
-//          ]
-//
-//
-//      do
-//        Map.iter(fun tbl (size,colMap) ->
-//                 printfn "%A" tbl
-//                 printfn "------------------"
-//                 printf "ID,"
-//                 Map.iter(fun cn _ -> printf "%O," cn) colMap
-//                 printfn ""
-//                 for i in 0..size-1 do
-//                    printf "%O," i
-//                    Map.iter(fun cn (cv:System.Array) -> printf "%O," (cv.GetValue(i))) colMap
-//                    printfn ""
-//                 printfn "------------------"
-//                 ) data
-//                        
-//        
-//     
-//      let (e,(VD,AD)) = time "infer" infer data
-//      printfn "Log Evidence: %O" e.LogOdds
-//      Map.iter (fun k v -> printfn "Variable %O\n-------------------------------\n%O" k v) VD
-//      Map.iter (fun k v -> printfn "Array %O\n-------------------------------\n%O" k v) AD
-      
-
-
-//  
-//
-//  let test() = 
-//      //let db = TrueSkill.Schema
-//     // let db = DifficultyAbilitySkipDiscreteEvaluation.Schema
-//     //let db = DAREEval.DAREUI
-//      //let db = InfernoClassicMM.Schema
-//      let db =PureRecommender.SchemaWithUpto
-//      let s = trSchema( OldToNew.trSchema(db))
-//      
-//      let cs = StoString "\n" s
-//      printfn "%s\n" cs
-//      let (RE,VE,AE) = interpS Map.empty Map.empty Map.empty s
-//      printfn "%A \n %A \n %A " RE VE AE
-//
-//  let dareEvaluation (schema:OldTabular.Database<_>) =  
-//    printfn "evaluating %A" schema.Name
-//
-//    let db = schema
-//   // printfn "%O" (Tabular.dataBaseToTex db)
-//    
-//    let loader = new DAOLoader(__SOURCE_DIRECTORY__ + "\..\MarkupFunLayer\DARE.accdb")
-//   
-//    let concreteData, posToID = readTable loader db
-//    
-//
-//    let size t = 
-//       let m,os = concreteData.[t]
-//       Seq.length(os)
-//
-//    let column (dummy:'T) t c = 
-//           let m,os = concreteData.[t]
-//           (c,([| for o in os -> o.[m.[c]] :?> 'T |] :> System.Array))
-//
-//    let data = 
-//        Map.ofList
-//          [("Participants",(size "Participants",Map.empty));
-//           ("Questions", (size "Questions",          Map.ofList([
-//                                                                 column 0 "Questions" "TrueAnswer";
-//                                                                 column true "Questions" "Training";
-//                                                                 ])))
-//           ("QuestionsTrain", (size "QuestionsTrain",Map.ofList([column 0 "QuestionsTrain" "QuestionID";
-//                                                                 column 0 "QuestionsTrain" "Answer";
-//                                                                 ])))
-//           ("Responses", (size "Responses",Map.ofList([column 0 "Responses" "QuestionID";
-//                                                       column true "Responses" "Training";
-//                                                       column 0 "Responses" "ParticipantID";
-//                                                       column 0 "Responses" "TrueAnswer";])));
-//           ("ResponsesTrain", (size "ResponsesTrain",Map.ofList([column 0 "ResponsesTrain" "ResponseID";
-//                                                                 column 0 "ResponsesTrain" "Answer"])))];
-//              
-//    let infer = 
-//      time "Tabular translation" compile  (OldToNew.trSchema db)
-//
-//    
-//    let (e,(VD,AD)) = 
-//      time "Tabular inference" infer data
-//    
-//    let report = fun  table ->
-//    
-//      let (actualcolMap, actuals) = concreteData.[table]
-//      if true then 
-//        let mutable logProbTest = 0.
-//    
-//        let mutable countTest=0
-//        let mutable numCorrect=0;
-//        let mutable idx = 0;
-//        let predicted_answer = AD.[col(table,"Answer")] :?> DistributionArray<Discrete>
-//        for actual in actuals do
-//          if (not(actual.[actualcolMap.["Training"]] :?> bool)) 
-//          then
-//            countTest <- countTest+1
-//            let answer = predicted_answer.[idx]
-//            let trueAnswer =  actual.[actualcolMap.["TrueAnswer"]] :?> int
-//            let mode = answer.GetMode()
-//            if (mode = trueAnswer) then numCorrect <- numCorrect+1
-//            logProbTest <- logProbTest + answer.GetLogProb(trueAnswer)
-//          idx <- idx + 1
-//        printfn "Test set size %A" countTest
-//        printfn "Test set accuracy %.2f (percent)" (100.0* ((float) numCorrect/ (float) countTest))
-//        printfn "Avg log prob TrueAnswer %.3f (test)" (logProbTest / (float)countTest)
-//        printfn "Avg prob TrueAnswer %.3f (test)" (System.Math.Exp(logProbTest / (float)countTest))
-//      else()
-//    report "Responses"
-//    report "Questions"
-//    printfn "Model Evidence %A" e.LogOdds
-    
-//   
-//   
-//  let dareProgressionEvaluation () = 
-//    dareEvaluation(DAREEval.Ability) 
-//    printfn "\n---------------------"
-//    dareEvaluation(DAREEval.DA) 
-//    printfn "\n---------------------"
-//    dareEvaluation(DAREEval.DARE) 
-//
-//  let moocEvaluation (schema:OldTabular.Database<_>) =  
-//    printfn "evaluating %A" schema.Name
-//
-//    let db = schema
-//   // printfn "%O" (Tabular.dataBaseToTex db)
-//    
-//    let loader = new DAOLoader(__SOURCE_DIRECTORY__ + "\..\MarkupFunLayer\mooc - evaluation.accdb")
-//   
-//    let concreteData, posToID = readTable loader db
-//    
-//
-//    let size t = 
-//       let m,os = concreteData.[t]
-//       Seq.length(os)
-//
-//    let column (dummy:'T) t c = 
-//           let m,os = concreteData.[t]
-//           (c,([| for o in os -> o.[m.[c]] :?> 'T |] :> System.Array))
-//
-//    let data = 
-//        Map.ofList
-//          [("Students",(size "Students",Map.empty));
-//           ("Questions", (size "Questions",          Map.ofList([
-//                                                                 column 0 "Questions" "answerIdx";
-//                                                                 ])))
-//           ("Responses", (size "Responses",Map.ofList([column 0 "Responses" "studentID";
-//                                                       column 0 "Responses" "questionID";
-//                                                       column true "Responses" "Training";
-//                                                       
-//                                                       column 0 "Responses" "answerIdx";])));
-//           ("ResponsesTrain", (size "ResponsesTrain",Map.ofList([column 0 "ResponsesTrain" "studentID";
-//                                                                 column 0 "ResponsesTrain" "questionID";
-//                                                                 column 0 "ResponsesTrain" "answerIdx"])))];
-//              
-//    let infer = 
-//      time "Tabular translation" compile (OldToNew.trSchema(db))
-//
-//    
-//    let (e,(VD,AD)) = 
-//      time "Tabular inference" infer data
-//    
-//    let report = fun  table ->
-//    
-//      let (actualcolMap, actuals) = concreteData.[table]
-//      if true then 
-//        let mutable logLikelihoodTraining = 0.
-//        let mutable logLikelihoodTest = 0.
-//        let mutable countTraining=0
-//        let mutable countTest=0
-//        let mutable idx = 0;
-//        let mutable numCorrectTraining = 0;
-//        let mutable numCorrectTest = 0;
-//        let predicted_answer = AD.[col(table,"answerIdxP")] :?> DistributionArray<Discrete>
-//        for actual in actuals do
-//          if (not(actual.[actualcolMap.["Training"]] :?> bool)) 
-//          then
-//            countTest <- countTest+1
-//            let answer = predicted_answer.[idx]
-//            let trueAnswer =  actual.[actualcolMap.["answerIdx"]] :?> int
-//            let mode = answer.GetMode()
-//            if (mode = trueAnswer) then numCorrectTest <- numCorrectTest+1
-//            logLikelihoodTest <- logLikelihoodTest + answer.GetLogProb(trueAnswer)
-//          else
-//            countTraining <- countTraining+1
-//            let answer = predicted_answer.[idx]
-//            let trueAnswer =  actual.[actualcolMap.["answerIdx"]] :?> int
-//            let mode = answer.GetMode()
-//            if (mode = trueAnswer) then numCorrectTraining <- numCorrectTraining+1
-//            logLikelihoodTraining <- logLikelihoodTraining + answer.GetLogProb(trueAnswer)
-//          idx <- idx + 1
-//
-//        printfn "Training set size %A" countTraining
-//        printfn "Training set accuracy %A (percent)" (100.0* ((float) numCorrectTraining/ (float) countTraining))
-//        printfn "logLikelihood TrueAnswer %A (training)" (logLikelihoodTraining / (float) countTraining)
-//
-//        printfn "Test set size %A" countTest
-//        printfn "Test set accuracy %A (percent)" (100.0* ((float) numCorrectTest/ (float) countTest))
-//        printfn "logLikelihood TrueAnswer %A (test)" (logLikelihoodTest / (float)countTest)
-//      else()
-//    report "Responses"
-//    printfn "Model Evidence %A" e.LogOdds
-//    
-//   
-//   
-//  let moocProgressionEvaluation () = 
-//    moocEvaluation(MOOCEval.DA) 
-//    printfn "\n---------------------"
-//    moocEvaluation(MOOCEval.DAS) 
-//    printfn "\n---------------------"
-//    moocEvaluation(MOOCEval.DASG)
-//    printfn "\n---------------------"
-//    moocEvaluation(MOOCEval.DASGC)
-
-

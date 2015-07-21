@@ -20,7 +20,7 @@ module StringToInferNet =
     open Syntax
     open System
 
-    type dataNormalized = Map<ColumnName,int> * (obj array) seq (*all the idds are positional, we dont need them to be explicit*)
+    type dataNormalized = Map<ColumnName,int> * (obj array) seq (*all the ids are positional, we don't need them to be explicit*)
 
     type DTO     = DTO of Map<TableName, dataNormalized>
     type KnowDTO = KnowDTO of Map<TableName, Map<ColumnName,int> * (obj array)>     //table level DTO for posterior
@@ -122,7 +122,6 @@ module TypedDTO =
     abstract member convertBool      : 'Src -> bool
     abstract member convertString    : 'Src -> string
     abstract member convertOption    : ('Src -> 'T) ->  'Src -> 'T option
-    //abstract member convertToId      : TableName ->  'Src -> IComparable //point 1 : may be ? but making it dependant on the tablenmae is disgusting
     member this.convertInstance<'T>  (f:('Src -> 'T)) (s:'Src[]) = Array.map f s
     abstract member convertArray<'T> :  ('Src -> 'T) -> 'Src -> 'T[]
   type ObjConverter ()=
@@ -224,7 +223,7 @@ module TypedDTO =
   
   and GenericIComparableRep ((*tableName:TableName*)) = 
       inherit Rep<IComparable>()
-      override this.Convert c s = box s  :?> IComparable  //point 1 : we dont use the converter as we dont have any prefered type. we could call point 1
+      override this.Convert c s = box s  :?> IComparable  //point 1 : we don't use the converter as we don't have any prefered type. we could call point 1
       override this.Visit visitor = visitor.CaseGenericIComparableRep this
   and GenericToStringRep () = 
       inherit Rep<IComparable> ()
@@ -243,75 +242,27 @@ module TypedDTO =
 
   let mkStatic (converter: Converter<'Src>) (rep:Rep) (src:'Src) : Static = 
      (rep).Open { new RepOpen<Static> with member this.Case<'T>(r) = Static<'T> (r.Convert converter src) :> Static }
-
-     (*
-     (rep).Visit({ new RepVisitor<Static> with
-             member this.CaseIntRep                r  = Static<int >        (r.Convert converter src) :> Static
-             member this.CaseArrayRep<'T>         (r:ArrayRep<'T>)  = Static<'T[] > (r.Convert converter src) :> Static
-             member this.CaseUpToRep               r  = Static<int >        (r.Convert converter src) :> Static
-             member this.CaseUpToSizeRep           r  = Static<int >        (r.Convert converter src) :> Static
-             member this.CaseBoolRep               r  = Static<bool>        (r.Convert converter src) :> Static
-             member this.CaseStringRep             r  = Static<string>      (r.Convert converter src) :> Static
-             member this.CaseRealRep               r  = Static<real>        (r.Convert converter src) :> Static
-             member this.CaseGenericIComparableRep r  = Static<IComparable> (r.Convert converter src) :> Static
-             member this.CaseGenericToStringRep    r  = Static<IComparable> (r.Convert converter src) :> Static
-             member this.CaseVectorRep    r  = Static<Vector> (r.Convert converter src) :> Static
-             member this.CaseMatrixRep    r  = Static<Matrix> (r.Convert converter src) :> Static
-       })*)
   let mkInstance (converter: Converter<'Src>) (rep:Rep)  (src:'Src[]) : Instance  = 
       (rep).Open { new RepOpen<Instance> with member this.Case<'T>(r) = NonNullableInstance<'T> (converter.convertInstance  (r.Convert converter) src) :> Instance }
-  (*
-     (rep).Visit( { new RepVisitor<Instance> with 
-            member this.CaseIntRep                 r  = NonNullableInstance<int>         (converter.convertInstance  (r.Convert converter) src) :> Instance
-            member this.CaseArrayRep<'T>           (r:ArrayRep<'T>)  = NonNullableInstance<'T[]       >         (converter.convertInstance  (r.Convert converter) src) :> Instance
-            member this.CaseUpToRep                r  = NonNullableInstance<int >        (converter.convertInstance  (r.Convert converter) src) :> Instance
-            member this.CaseUpToSizeRep            r  = NonNullableInstance<int >        (converter.convertInstance  (r.Convert converter) src) :> Instance
-            member this.CaseBoolRep                r  = NonNullableInstance<bool>        (converter.convertInstance  (r.Convert converter) src) :> Instance
-            member this.CaseStringRep              r  = NonNullableInstance<string>      (converter.convertInstance  (r.Convert converter) src) :> Instance
-            member this.CaseRealRep                r  = NonNullableInstance<real>        (converter.convertInstance  (r.Convert converter) src) :> Instance
-            member this.CaseGenericIComparableRep  r  = NonNullableInstance<IComparable> (converter.convertInstance  (r.Convert converter) src) :> Instance
-            member this.CaseGenericToStringRep     r  = NonNullableInstance<IComparable> (converter.convertInstance  (r.Convert converter) src) :> Instance
-            member this.CaseVectorRep    r  = NonNullableInstance<Vector> (converter.convertInstance  (r.Convert converter) src) :> Instance
-            member this.CaseMatrixRep    r  = NonNullableInstance<Matrix> (converter.convertInstance  (r.Convert converter) src) :> Instance
-
-      })
-      *)
-  
+ 
   let mkNullableInstance (converter: Converter<'Src>) (rep:Rep)  (src:'Src []) : Instance  = 
       (rep).Open { new RepOpen<Instance> with member this.Case<'T>(r) = NullableInstance<'T> (converter.convertInstance  (r.ConvertOption converter) src) :> Instance }
- (*     
-     (rep).Visit( { new RepVisitor<Instance> with 
-            member this.CaseIntRep                 r  = NullableInstance<int        > (converter.convertInstance  (r.ConvertOption converter) src) :> Instance
-            member this.CaseArrayRep<'T>           (r:ArrayRep<'T>)  = NullableInstance<'T[]       > (converter.convertInstance  (r.ConvertOption converter) src) :> Instance
-            member this.CaseUpToRep                r  = NullableInstance<int        > (converter.convertInstance  (r.ConvertOption converter) src) :> Instance
-            member this.CaseUpToSizeRep            r  = NullableInstance<int        > (converter.convertInstance  (r.ConvertOption converter) src) :> Instance
-            member this.CaseBoolRep                r  = NullableInstance<bool       > (converter.convertInstance  (r.ConvertOption converter) src) :> Instance
-            member this.CaseStringRep              r  = NullableInstance<string     > (converter.convertInstance  (r.ConvertOption converter) src) :> Instance
-            member this.CaseRealRep                r  = NullableInstance<real       > (converter.convertInstance  (r.ConvertOption converter) src) :> Instance
-            member this.CaseGenericIComparableRep  r  = NullableInstance<IComparable> (converter.convertInstance  (r.ConvertOption converter) src) :> Instance
-            member this.CaseGenericToStringRep     r  = NullableInstance<IComparable> (converter.convertInstance (r.ConvertOption converter)  src) :> Instance
-            member this.CaseVectorRep    r  = NullableInstance<Vector> (converter.convertInstance  (r.ConvertOption converter) src) :> Instance
-            member this.CaseMatrixRep    r  = NullableInstance<Matrix> (converter.convertInstance  (r.ConvertOption converter) src) :> Instance
 
-      })
-      *)
- 
-
-  /// Accross function call to get data, the same ID ordering has to be preserved....
+  /// Across function call to get data, the same ID ordering has to be preserved....
   type DataSource<'Src> = TableName -> int *  (ColumnName -> 'Src[])
 
   let genericIComparableRep = GenericIComparableRep() :> Rep
 
   /// ColumnType -> env -> Rep 
-  /// when refering to another table, we can use any encoding. that will neeed to be translated to a IComparable with the help of a rep (type directed translation)
-  /// but hte rep itself can store the mapping
+  /// when refering to another table, we can use any encoding. This will neeed to be translated to an IComparable with the help of a rep (type directed translation)
+  /// The rep itself stores the mapping;
   let rec rep (idReps : Map<TableName,  Rep>, idMap : Map<TableName, Map<IComparable,int>>) r = 
             match r with
             | T_Upto(TypedExp(Const(IntConst n),_)) -> new UptoRep(n):> Rep
             | T_Link(tn) 
             | T_Upto(TypedExp(SizeOf tn,_)) -> if idReps.ContainsKey tn then 
                                                    // ID as a foreign reference : 
-                                                   //i always use an IComparable as the foreign representation
+                                                   //We always use an IComparable as the foreign representation
                                                    //this could be made smarter but how ? in the end the only universal thinkg we only know is that it will have to be IComparable..
                                                    //anything else has to come from either the schema (and here we have nothing) or from the source
                                                    //we can delegate to the converter some decision (cf point 1) but for what purpose ?
@@ -487,7 +438,7 @@ module TypedDTO =
 
   /// Careful : erases existing CSVs. it ensures presence of dir
   /// representation : rows interpret nulls as None, and write an empty string to the file
-  /// we interpret string as objects to be persisted and add escape to it
+  /// we interpret strings as objects to be persisted and add escape to it
   /// all this code should be driven by types
   let write2DArrayToCSV dir filename (rows:obj[,]) = 
         let separator = ","
@@ -515,8 +466,8 @@ module TypedDTO =
                     (fun tn _ _ staticDataBuf instanceDataBuf ->
                         let cardStatic      = Array2D.length1 staticDataBuf   - 1  //-1 for the headers
                         if cardStatic > 0 then
-                            write2DArrayToCSV  dirName (tn^"static.csv") staticDataBuf
-                        write2DArrayToCSV  dirName (tn^".csv")           instanceDataBuf
+                            write2DArrayToCSV  dirName (tn+"static.csv") staticDataBuf
+                        write2DArrayToCSV  dirName (tn+".csv")           instanceDataBuf
                     )
                     distToString
                     db

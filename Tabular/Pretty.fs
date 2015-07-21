@@ -5,7 +5,7 @@ module Pretty =
  
 
   let rec private isAtomic e =
-      //TBR this looks wrong
+      //TBR 
       match e with 
       | S.Var _ | S.Const _ | S.SizeOf _  | S.ForLoop _ | S.Array _ | S.DeRef _ | S.Prim (S.Factor _,_)| S.Dist _ | S.Subscript _  -> true
       | S.TypedExp(e,t) -> isAtomic e
@@ -69,13 +69,10 @@ module Pretty =
    | S.Prim(S.LtEq,[e1;e2]) -> sprintf "%O <= %O"  (nestedExprToStr e1) (nestedExprToStr e2)
    | S.Prim(S.GtEq,[e1;e2]) -> sprintf "%O >= %O"  (nestedExprToStr e1) (nestedExprToStr e2)
    | S.Prim(S.Factor(S.FactorName p),es) ->  sprintf "%O(%O)" p (expsToStr es)
-   //| S.Dist(S.GaussianFromMeanAndPrecision,es) -> sprintf "Gaussian(%O)" (expsToStr es)
-   //| S.Dist(S.GammaFromShapeAndScale,es) -> sprintf "Gamma(%O)" (expsToStr es)
    | S.Dist(S.GaussianFromMeanAndVariance,es) -> sprintf "Gaussian(%O)" (expsToStr es)
    | S.Dist(d,es) -> sprintf "%O(%O)" (distToStr d) (expsToStr es)
    | S.SizeOf(t) -> sprintf "SizeOf(%O)" (ident t)
    | S.DeRef(e1,_,cn) -> sprintf "%O.%O" (nestedExprToStr e1) (ident cn) // suppress link
-  // | S.DeRef(e1,tn,cn) -> sprintf "(%O :> Link(%O)).%O" (nestedExprToStr (e1)) tn cn
    | S.Ref(tn,cn) -> sprintf "%O.%O"  (ident tn) (ident cn)
    | S.If(e1,e2,e3) -> sprintf "if %O then %O else %O" (exprToStr e1) (exprToStr e2) (exprToStr e3)
    | S.ForLoop(x,e1,e2) -> sprintf "[for %O < %O ->  %O]" (ident x) (nestedExprToStr e1) (exprToStr e2)  

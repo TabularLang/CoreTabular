@@ -41,55 +41,7 @@ module QueryCompiler =
     module FArray = Microsoft.FSharp.Collections.Array
 
     type Helper =  Utilities
-    (*
-     static member StdDeviation(dist:obj):double =
-                      let v = (dist :?> CanGetVariance<double>).GetVariance()
-                      System.Math.Sqrt(v)
-        static member Sum(a:double[]) = Array.sum a
-      
-       
-        static member ArgMax(a:double[]) = 
-                     let rec maxi cm n =
-                         if n = a.Length then cm
-                         else let cm' = if a.[cm] >= a.[n] then cm else n
-                              in maxi cm' (n+1)
-                     in
-                        maxi 0 0
-
-        static member HashMax(a:double[]) =
-                      Array.max(a)
-   
-        static member ArgMin(a:double[]) =
-                     let rec mini cm n =
-                         if n = a.Length then cm
-                         else let cm' = if a.[cm] <= a.[n] then cm else n
-                              in mini cm' (n+1)
-                     in
-                        mini 0 0 
-
-        static member DiscreteProbs(d:obj):real [] =
-               let counts = (d:?>Distributions.Discrete).GetProbs()
-               Array.init counts.Count (fun i -> counts.[i])    
-
-        static member DirichletCounts(d:obj):real [] =
-               let counts = (d:?>Distributions.Dirichlet).PseudoCount
-               Array.init counts.Count (fun i -> counts.[i])    
-
-         
-        static member DiagonalPDMatrix(v:real[]) : Maths.PositiveDefiniteMatrix = 
-                      let mat = Maths.PositiveDefiniteMatrix.Identity(v.Length)
-                      let _ = mat.SetDiagonal(Maths.Vector.FromArray(v)) 
-                      mat
-
-        static member IndexDist(dists:obj,idx:int) =
-                      let mr = dists.GetType().GetMethod("get_Item")
-                      mr.Invoke(dists,[|box idx|])
-                      //match dists with
-                      //dists.GetType()
-                      //| :? System.Collections.IList as l -> l.[idx] 
-                      //| _ -> failwithf "IndexDist"
-*)
-
+    
     type Sampler = 
         static member Bernoulli(bias:real) =
                       Distributions.Bernoulli(bias).Sample()
@@ -130,20 +82,6 @@ module QueryCompiler =
                       Distributions.Wishart.FromShapeAndRate(shape,rate).Sample()
         static member WishartFromShapeAndScale(shape,rate) =
                       Distributions.Wishart.FromShapeAndScale(shape,rate).Sample()
-       
- 
-    (*
-      | Beta | BetaFromMeanAndVariance 
-        | GaussianFromMeanAndPrecision | GaussianFromMeanAndVariance
-        | GammaFromShapeAndScale | GammaFromMeanAndVariance | GammaFromShapeAndRate
-        | Binomial
-        | VectorGaussianFromMeanAndVariance | VectorGaussianFromMeanAndPrecision 
-        | Discrete | DiscreteUniform
-        | Poisson
-        | Bernoulli
-        | Dirichlet | DirichletUniform | DirichletSymmetric
-        | WishartFromShapeAndRate | WishartFromShapeAndScale
-    *)
 
      let rec schemaHasQuery
                     hasQuery
@@ -247,7 +185,7 @@ module QueryCompiler =
                           [|L.Assign(xr,e1) :> L;
                             e2
                           |]) :> L
-         override this.ForLoop((xd,xv),e1,e2,t2) = //TODO simplify using Loop
+         override this.ForLoop((xd,xv),e1,e2,t2) = 
             let exit = L.Label(typeof<System.Void>)
             let cont = L.Label(typeof<System.Void>)
             let a =  L.Variable(t2.MakeArrayType(),null)
@@ -599,7 +537,7 @@ module QueryCompiler =
                           X.Call(typeof<Maths.PositiveDefiniteMatrix>.GetMethod("IdentityScaledBy",[|typeof<int>;typeof<double>|]),[|v1.e;v2.e|]))
                         :> XExp<'E>
             
-               (*
+                (*
                 | Prim.Factor(FactorName "GetItems"),[e1;e2]->  // I doubt this will work...
                     let v = e1
                     let w = e2
@@ -659,7 +597,7 @@ module QueryCompiler =
                          | (H,_,v,_) -> v
                          | (W,_,v,_) -> v
                          | (Y,D.R,vs,_) when mode = MQuery -> 
-                          new XExp<'E,obj>( X.ArrayIndex(vs.e,i.e) (* X.Call(typeof<Helper>.GetMethod("IndexDist"),[|vs.e;i.e|])*)) :> XExp<'E>
+                          new XExp<'E,obj>( X.ArrayIndex(vs.e,i.e)) :> XExp<'E>
                          | (Y,_,vs,_) -> 
                             xexpOf t (X.ArrayIndex(vs.e,i.e)) 
               | Const (IntConst v) -> new XExp<'E,int>( X.Constant(v)) :> XExp<'E>
@@ -789,8 +727,8 @@ module QueryCompiler =
                     pars decs exps args
                     ((TE,LTE): Map<TableName,(XExp<'E> (* size *) *Map<ColumnName, Syntax.B * Syntax.D * XExp<'E> * index >)> * List<TableName * List<(ColumnName * (obj-> ColValue )) >>)
                     tables  = 
-              let id2Rep = db |> Map.map(fun k (_,_,rep,keyToPos) -> rep) // build me up incrementally
-              let id2KeyToPos = db |> Map.map(fun k (_,_,_,keyToPos) -> keyToPos) // build me up incrementally
+              let id2Rep = db |> Map.map(fun k (_,_,rep,keyToPos) -> rep) // better: build incrementally as we traverse tables
+              let id2KeyToPos = db |> Map.map(fun k (_,_,_,keyToPos) -> keyToPos) // better: build incrementally as we traverse tables
               let trTables =  trTables2 mode (db:DataBase) 
              
               match tables with
@@ -881,31 +819,8 @@ module QueryCompiler =
                     | Latent m when Types.det T <> R || mode = MSampler -> 
                       let Ts = (typeOf T).MakeArrayType()
                       let (pv,pr) =  X.Parameter(Out,Ts,output(tn,cn))
-                     // assert par.IsByRef 
-                    //  let exit = X.Label(typeof<System.Void>)
-                     // let cont = X.Label(typeof<System.Void>)
-                      
                       let (av,ar) = X.Variable(Ts,temp(tn,cn))
                       let (xv,xr) = X.Variable(typeof<int>,cn+"_i")
-                    (*
-                      let exp =
-                       X.Block(
-                        [| a;xv |],
-                        [  X.Assign(xv,X.Constant(0)) :> X;
-                           X.Assign(a,X.NewArrayBounds(typeOf T,[|X.Constant(length):>X|])) :> X;
-                           X.Loop(X.IfThenElse(
-                                    X.GreaterThanOrEqual(xv,X.ArrayLength(a) :> X),
-                                    X.Break(exit),
-                                    X.Block(X.Assign(X.ArrayAccess(a,xv),
-                                                     (trModel mode TE CE (new XExp<'E,int>(xv:>X)) m).e),
-                                            X.PreIncrementAssign(xv),
-                                            X.Continue(cont))
-                                    ),exit,cont) :> X;
-                           X.Assign(par,a) :> X;
-                        ] :> seq<Expression>
-                       ):> X
-
-                      *)
                       let exp : 'S =
                          X.Block(
                                  [| |],
@@ -917,45 +832,21 @@ module QueryCompiler =
                                            [|X.Assign(X.ArrayAccess(ar,xr),(trModel mode TE CE (new XExp<'E,int>(xr)) m).e)|]);
                                     X.Assign(pr,ar)|]
                          )
-
-                       
                       let CE' = CE.Add(cn,(Y,Types.det T,(xexpOf T ar).MakeArray(),pars.Length))
                       let rep = TypedDTO.rep (id2Rep, id2KeyToPos) T //TBR
                       let mkNonNullableInstance (vs:obj) : Instance  =
                            rep.Open {new RepOpen<Instance> with member this.Case<'T>(r:Rep<'T>) = NonNullableInstance<'T> (vs :?> 'T[] ):> Instance }
-                      (*
-                           (rep).Visit( { new RepVisitor<Instance> with 
-                                  member this.CaseIntRep                 r  = NonNullableInstance<int        > (vs :?> int[] ):> Instance
-                                  member this.CaseArrayRep<'T>(r:ArrayRep<'T>)  = NonNullableInstance<'T[]       > (vs :?> 'T[][] ):> Instance
-                                  member this.CaseUpToRep                r  = NonNullableInstance<int        > (vs :?> int[] ):> Instance
-                                  member this.CaseUpToSizeRep            r  = NonNullableInstance<int        > (vs :?> int[] ):> Instance
-                                  member this.CaseBoolRep                r  = NonNullableInstance<bool       > (vs :?> bool[] ):> Instance
-                                  member this.CaseStringRep              r  = NonNullableInstance<string     > (vs :?> string[] ):> Instance
-                                  member this.CaseRealRep                r  = NonNullableInstance<real       > (vs :?> real[] ):> Instance
-                                  member this.CaseGenericIComparableRep  r  = NonNullableInstance<System.IComparable> (vs :?> System.IComparable[] ):> Instance
-                                  member this.CaseGenericToStringRep     r  = NonNullableInstance<System.IComparable> (vs :?> System.IComparable[] ):> Instance
-                                  member this.CaseVectorRep     r  = NonNullableInstance<Vector> (vs :?> Vector[] ):> Instance
-                                  member this.CaseMatrixRep     r  = NonNullableInstance<Matrix> (vs :?> Matrix[] ):> Instance
-
-                            })                                                                               
-*)
-
                       let LCE' = (cn, fun vs -> mkNonNullableInstance  vs:> ColValue)::LCE
                       trColumns (pv::pars) (av::decs) (exp::exps) ((null:>obj)::args)  (CE',LCE') rest
                 trColumns pars decs exps args (Map.empty,[]) table
-
-
-          
             
           let compile mode db tables = 
                     trTables2  mode db [] [] [] [] (Map.empty,[]) tables
-            
           compile
 
-         
-       let  Sample = compile (new LinqGen()) MSampler
+       let Sample = compile (new LinqGen()) MSampler
+       let Query = compile (new LinqGen()) MQuery
+       let ExtractQuery = compile (new CodeDomGen()) MQuery
 
-       let  Query = compile (new LinqGen()) MQuery
 
-       let  ExtractQuery = compile (new CodeDomGen()) MQuery
 

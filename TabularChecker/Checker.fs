@@ -109,7 +109,6 @@ let rec checkExpr (pc:B) (g:Env) (e:Exp) (t:TargetType) : ExprTyped  =
   | Array es -> 
       match t with
         T_Array (t',f) ->
-          //TODO: check the equality. Should we use z3?
           //TODO: rewrite me...
           let folder (ls:(ExprTyped list), l:D) (ei:Exp) : ((ExprTyped list)*D) =
             let (TypedExp(_,t'') as eti) = checkExpr g ei t'
@@ -120,8 +119,6 @@ let rec checkExpr (pc:B) (g:Env) (e:Exp) (t:TargetType) : ExprTyped  =
           let (ets,l) = (Seq.fold folder ([  ], D) es)
           (TypedExp(Array ets, supT t l))
        | _ -> failwith "not an array type"
-    // TODO: comprehensions (for-loops) not currently in the language 
-    // Check Swap (unrefined)
   | Const (IntConst i) -> 
         match t with 
          | T_Int -> 
@@ -227,7 +224,6 @@ and synthPrim g p ts =
       t
     | Factor(FactorName "ArgMax"),[T_Array(T_Real,len1)] -> (Types.supT (T_Upto(len1)) Qry).Value
     | Factor(FactorName "ArgMin"),[T_Array(T_Real,len1)] -> (Types.supT (T_Upto(len1)) Qry).Value
-   //TODO extend me
     | _ -> failwithf "cannot apply operation %A to arguments of types %A" p (System.String.Join(",",[| for t in ts -> Pretty.columnTypeToStr t |]))
 
 and synthDist pc g (dist,ets) =
@@ -284,19 +280,6 @@ and synthExpr (pc:B) (g:Env) (e:Exp) : ExprTyped =
             let (TypedExp(_,t2) as et2) = checkExpr pc g e2 (T_Upto (f))
             (TypedExp(Subscript (et1, et2), supT t (det t2)))
         | _ -> failwithf "cannot index expression of non-array type" 
-        
-  (*
-    //Synth Record
-    | Tabular.Record ls ->
-        let mapper = fun pair -> let (name, e) = pair in
-                                 let (e',l) = synthExpr g e in
-                                 let (e1, t) = e' in
-                                 (((name, e'), (name, t)), l)
-        let (fieldsAndTypes, levels) = List.unzip (List.map mapper ls)
-        let (out_expr, out_t) = (List.unzip fieldsAndTypes)
-        let l = supList levels
-        ((Record out_expr, T_Record out_t), l)
-*)
     // The parser cannot distinguish a Ref from a DeRef so we resolve during typechecking instead.
     | Tabular.DeRef (Var(tb),"", cj) when hasTable g tb -> 
         synthExpr (pc:B) (g:Env) (Tabular.Ref (tb, cj))
@@ -333,7 +316,6 @@ and synthExpr (pc:B) (g:Env) (e:Exp) : ExprTyped =
         if (rejectShadowing && hasVarOrTable g x) then failwith (sprintf "variable %O already in environment" x)
         if det t > D then failwithf "expected deterministic space for %A; found space %O" x (Pretty.detToStr (det t))
         let (TypedExp(_,u) as ft)= synthExpr pc (envInsertVar g x (T_Upto(et), pc)) f
-        //TODO: check u is well-formed - if pc is H then it just could mention x!
         TypedExp(ForLoop (x, et, ft), T_Array (u, et))
      | Scan (s,x,e0,e1,e2) ->
         let (TypedExp(_,t2) as et2) = synthExpr pc g e2
@@ -380,7 +362,6 @@ and synthExpr (pc:B) (g:Env) (e:Exp) : ExprTyped =
         | Some true -> 
           TypedExp(Constraint (et1, t1'), t1')
         | _ -> failwithf "constrained expression in space %O cannot be in incompatible space %O " (det t1'') (det t1')
-     //TBC
      | Infer((Beta|BetaFromMeanAndVariance) as d,[],fld,e1) ->
         let (TypedExp(_, t1) as et1) = checkExpr pc g e1 (T_Det(B_Real,R))
         checkName ["Mean";"mean";"Variance";"variance";"alpha";"trueCount";"beta";"falseCount"] fld
@@ -448,149 +429,3 @@ and isWellFormed (g:Env) (t_in:ColumnType) : TargetType =
        
    
 
-(*
-and substExprInType (typeIn:TargetType) (toSubst:Var) (newSubEx:ExprUntyped) : TargetType =
-    match typeIn with
-      T_Link _ -> typeIn
-    | T_Real -> typeIn
-    | T_Bool -> typeIn
-    | T_Int -> typeIn
-    | T_Upto e ->
-        let e' = substExpr e toSubst newSubEx
-        T_Upto e'
-    | T_String -> typeIn
-    | T_Array (t, e) ->
-        let t' = substExprInType t toSubst newSubEx
-        let e' = substExpr e toSubst newSubEx
-        T_Array(t, e)
-    | T_Record ls ->
-        let mapper = fun (c, t) ->
-                       let t' = substExprInType t toSubst newSubEx
-                       (c, t')
-        let ls' = List.map mapper ls
-        T_Record ls'
-    | T_Vector -> typeIn
-
-//TODO: subst the type in tIn
-and substExpr (substIn:ExprTyped) (toSubst:Var) (newSubEx:ExprUntyped) : ExprTyped =
-    let (eIn, tIn) = substIn
-    let tIn' = substExprInType tIn toSubst newSubEx
-    match eIn with
-      Const c -> (eIn, tIn')
-    | DiscreteConst (c1, c2) -> (eIn, tIn')
-    | RealConst c -> (eIn, tIn')
-    | BoolConst c -> (eIn, tIn')
-    | GT (e1, e2) -> 
-        let e1' = substExpr e1 toSubst newSubEx
-        let e2' = substExpr e2 toSubst newSubEx
-        let eOut = GT (e1', e2')
-        (eOut, tIn') // TODO subst in type tIn
-    | SizeOf tb -> (eIn, tIn')
-        //how do we subst expr in SizeOf?
-        // let e' = if (tb = toSubst) then newSubEx else 
-    | Column c ->
-        let e' = if (c = toSubst) then newSubEx else eIn
-        (e', tIn')
-    | Deref (c, e) ->
-        let e' = substExpr e toSubst newSubEx
-        let eOut = Deref (c,e')
-        (eOut, tIn')
-    | Param (_, _) -> (eIn, tIn')
-    | If (e1, e2, e3) ->
-        let e1' = substExpr e1 toSubst newSubEx
-        let e2' = substExpr e2 toSubst newSubEx
-        let e3' = substExpr e3 toSubst newSubEx
-        let eOut = If (e1', e2', e3')
-        (eOut, tIn')
-    | StrictIf (e1, e2, e3) ->
-        let e1' = substExpr e1 toSubst newSubEx
-        let e2' = substExpr e2 toSubst newSubEx
-        let e3' = substExpr e3 toSubst newSubEx
-        let eOut = StrictIf (e1, e2, e3)
-        (eOut, tIn')
-    | EQ (e1, e2) -> 
-        let e1' = substExpr e1 toSubst newSubEx
-        let e2' = substExpr e2 toSubst newSubEx
-        let eOut = EQ (e1', e2')
-        (eOut, tIn')
-    | Minus (e1, e2) -> 
-        let e1' = substExpr e1 toSubst newSubEx
-        let e2' = substExpr e2 toSubst newSubEx
-        let eOut = Minus (e1', e2')
-        (eOut, tIn')
-    | Or (e1, e2) -> 
-        let e1' = substExpr e1 toSubst newSubEx
-        let e2' = substExpr e2 toSubst newSubEx
-        let eOut = Or (e1', e2')
-        (eOut, tIn')
-    | Arr ls ->
-        let mapper = fun e ->
-                       substExpr e toSubst newSubEx
-        let ls' = Array.map mapper ls
-        (Arr ls', tIn')
-    | Index (e1, e2) -> 
-        let e1' = substExpr e1 toSubst newSubEx
-        let e2' = substExpr e2 toSubst newSubEx
-        let eOut = Index (e1', e2')
-        (eOut, tIn')
-    | Gaussian (e1, e2) -> 
-        let e1' = substExpr e1 toSubst newSubEx
-        let e2' = substExpr e2 toSubst newSubEx
-        let eOut = Gaussian (e1', e2')
-        (eOut, tIn')
-    | Gamma (e1, e2) -> 
-        let e1' = substExpr e1 toSubst newSubEx
-        let e2' = substExpr e2 toSubst newSubEx
-        let eOut = Gamma (e1', e2')
-        (eOut, tIn')
-    | DampBackward (e1, e2) -> 
-        let e1' = substExpr e1 toSubst newSubEx
-        let e2' = substExpr e2 toSubst newSubEx
-        let eOut = DampBackward (e1', e2')
-        (eOut, tIn')
-    | Probit (e1, e2) -> 
-        let e1' = substExpr e1 toSubst newSubEx
-        let e2' = substExpr e2 toSubst newSubEx
-        let eOut = Probit (e1', e2')
-        (eOut, tIn')
-    | DiscreteUniform (e1) -> 
-        let e1' = substExpr e1 toSubst newSubEx
-        //let e2' = substExpr e2 toSubst newSubEx
-        let eOut = DiscreteUniform (e1')
-        (eOut, tIn')
-    | Bernoulli (e1) -> 
-        let e1' = substExpr e1 toSubst newSubEx
-        //let e2' = substExpr e2 toSubst newSubEx
-        let eOut = Bernoulli (e1')
-        (eOut, tIn')
-    | Let (x, e, f) ->
-        let e' = substExpr e toSubst newSubEx
-        let f' = if (toSubst = x) then f else substExpr f toSubst newSubEx
-        let eOut = Let (x, e', f')
-        (eOut, tIn')
-    | Var x -> 
-        let e' = if (x = toSubst) then newSubEx else eIn
-        (e', tIn')
-    | Record ls -> //non-dependent
-        let mapper = fun (c, e) ->
-                       let e' = substExpr e toSubst newSubEx
-                       (c, e')
-        let ls' = List.map mapper ls
-        (Record ls', tIn')
-    | Dirichlet (e1, e2) -> 
-        let e1' = substExpr e1 toSubst newSubEx
-        let e2' = substExpr e2 toSubst newSubEx
-        let eOut = Dirichlet (e1', e2')
-        (eOut, tIn')
-    | Beta (e1, e2) -> 
-        let e1' = substExpr e1 toSubst newSubEx
-        let e2' = substExpr e2 toSubst newSubEx
-        let eOut = Beta (e1', e2')
-        (eOut, tIn')
-    | Discrete (e1, e2) -> 
-        let e1' = substExpr e1 toSubst newSubEx
-        let e2' = substExpr e2 toSubst newSubEx
-        let eOut = Discrete (e1', e2')
-        (eOut, tIn')
-    | _ -> failwith "NYI"
-*)

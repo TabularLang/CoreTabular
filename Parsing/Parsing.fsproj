@@ -85,7 +85,6 @@
     </FsLex>
     <Compile Include="Parsing.fs" />
     <Compile Include="SchemaParser.fs" />
-    <Compile Include="SchemaParserTest.fs" />
     <None Include="app.config" />
     <Content Include="manual compile.txt" />
     <None Include="Parsing.exe.config">

@@ -61,8 +61,6 @@ module Tex =
    | S.Prim(S.LtEq,[e1;e2]) -> sprintf "%O <= %O"  (nestedExprToStr e1) (nestedExprToStr e2)
    | S.Prim(S.GtEq,[e1;e2]) -> sprintf "%O >= %O"  (nestedExprToStr e1) (nestedExprToStr e2)
    | S.Prim(S.Factor(S.FactorName p),es) ->  sprintf "%O(%O)" p (expsToStr es)
-   //| S.Dist(S.GaussianFromMeanAndPrecision,es) -> sprintf "Gaussian(%O)" (expsToStr es)
-   //| S.Dist(S.GammaFromShapeAndScale,es) -> sprintf "Gamma(%O)" (expsToStr es)
    | S.Dist(S.GaussianFromMeanAndVariance,es) -> sprintf "Gaussian(%O)" (expsToStr es)
    | S.Dist(d,es) -> sprintf "%A(%O)" d (expsToStr es)
    | S.SizeOf(t) -> sprintf "SizeOf(%O)" t

@@ -558,78 +558,7 @@ module Extraction =
      let QueryMethod = QueryCompiler.ExtractQuery db typedCoreSchema
 
      meth.Statements.AddRange(QueryMethod.Statements)
-     
-     
-     (*
-     let AsArray = CodeSnippetTypeMember("\
-       public static object[] AsArray(object o) {
-          var a = (o as ConvertibleToArray).ToArray();
-          var os = new object[a.GetLength(0)];
-          for(int i = 0; i<os.Length;i++)
-            os[i] = a.GetValue(i);
-          return os;
-        } 
-      ")
-
-     let SetValueRange = CodeSnippetTypeMember("\
-      public static T SetValueRange<T>(T v, Range r) where T : Variable {
-          if (r != null) v.SetValueRange(r);
-          return v;
-      }
-      ")
-
-     let GetValueRange = CodeSnippetTypeMember("\
-      public static Range GetValueRange(Variable v) 
-      {
-          return v.GetValueRange(throwIfMissing: false);
-      }")
-
-     let ValueCount = CodeSnippetTypeMember("\
-          public static int ValueCount<T>(T?[] vs) where T : struct
-          {
-            var c = 0;
-            for (var i = 0; i < vs.Length; i++)
-            {
-                if (vs[i].HasValue) c++;
-            }
-            return c;
-          }")
-     let Values = CodeSnippetTypeMember("\
-          public static T[] Values<T>(T?[] vs) where T : struct
-          {
-            var ws = new T[ValueCount(vs)];
-            var h = 0;
-            for (var i = 0; i < vs.Length; i++)
-            {
-                if (vs[i].HasValue) ws[h++] = vs[i].Value;
-            }
-            return ws;
-          }")
-     let Indices = CodeSnippetTypeMember("\
-          public static int[] Indices<T>(T?[] vs) where T : struct
-          {
-            var ws = new int[ValueCount(vs)];
-            var h = 0;
-            for (var i = 0; i < vs.Length; i++)
-            {
-                if (vs[i].HasValue) ws[h++] = i;
-            }
-            return ws;
-          }")
-     let Let = CodeSnippetTypeMember("\
-          public static U  Let<T,U>(T x, Func<T,U> f) 
-          {
-            return f(x);
-          }")
-     let ForLoop = CodeSnippetTypeMember("\
-          public static T[] ForLoop<T>(int n, Func<int,T> f) 
-          { var a = new T[n];
-            for(int i = 0; i<n;i++) {
-              a[i] = f(i);
-            }
-            return a;
-          }")
-     *)
+    
      let utils = CodeSnippetTypeMember("\
              public class Utilities {
                 public static double StdDeviation(object dist) {
@@ -745,17 +674,6 @@ module Extraction =
 
      let _ = cclass.Members.Add(meth)
      let _ = cclass.Members.Add(utils)
-   //  let _ = cclass.Members.Add(QueryMethod)
-   (*
-     let _ = cclass.Members.Add(AsArray)
-     let _ = cclass.Members.Add(GetValueRange)
-     let _ = cclass.Members.Add(SetValueRange)
-     let _ = cclass.Members.Add(ValueCount)
-     let _ = cclass.Members.Add(Values)
-     let _ = cclass.Members.Add(Indices)
-     let _ = cclass.Members.Add(Let)
-     let _ = cclass.Members.Add(ForLoop)
-   *)  
      let _ = cNamespace.Types.Add(cclass)
      let _ = cCompileUnit.Namespaces.Add(cNamespace)
      let compiler = new CSharpCodeProvider()

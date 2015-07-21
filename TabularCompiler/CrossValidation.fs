@@ -2,18 +2,41 @@
 
 [<AutoOpen>]
 module CrossValidation =
+
+   
+
     let USE_PARALLELISM = false // ExcelCompiler needs to be threadsafe first
 
     open MicrosoftResearch.Infer.Tabular.Syntax
-    //open MicrosoftResearch.Infer.Tabular.TaskPane
-    //open Microsoft.Office.Interop
     open MicrosoftResearch.Infer
     open MicrosoftResearch.Infer.Distributions
-    //open MicrosoftResearch.Infer.Tabular.DataLayer
     open MicrosoftResearch.Infer.Tabular
-    open MicrosoftResearch.Infer.Tabular.ExcelCompiler
-    open MicrosoftResearch.Infer.Tabular.Compiler
-    //open MicrosoftResearch.Infer.Tabular.DataLayer.NewIO
+    open MicrosoftResearch.Infer.Tabular.TabularCompiler
+   // open MicrosoftResearch.Infer.Tabular.Compiler
+   
+    let dbToKnowAndDist schema (db : TypedDTO.DataBase) = 
+        let distDTO =  
+         DistDTO ( 
+          schema |> List.choose (function | (Declaration(Table(tn,_), table)) ->
+                                                let cols = table |> List.filter (fun c -> level c > W) |> List.map fst
+                                                let (tblsize, colValues, idRep, keytoPos)  = db.[tn]
+                                                let c2i  =  cols |> List.mapi   (fun i c -> (i,c)) |> Seq.fold (fun m (i,c) -> Map.add c i  m) Map.empty
+                                                let data = cols |> List.map (fun cn -> (colValues.[cn] :?> TypedDTO.Instance).get_NonNullValues ) |> List.toArray
+                                                Some(tn,(c2i, [| for row in 0..tblsize-1 -> Array.init cols.Length (fun i -> data.[i].GetValue(row)) |] :> seq<obj[]>))
+                                          | (Declaration(Fun(name), table)) ->  None)
+                  |> Map.ofList
+          )
+        let knowDTO = 
+          KnowDTO (
+           schema |> List.choose (function | (Declaration(Table(tn,_), table)) ->
+                                                         let cols = table |> List.filter (fun c -> level c = W) |> List.map fst
+                                                         let (tblsize, colValues,idRep, keytoPos)  = db.[tn]
+                                                         let c2i  =  cols |> List.mapi   (fun i c -> (i,c)) |> Seq.fold (fun m (i,c) -> Map.add c i  m) Map.empty
+                                                         Some(tn,(c2i, [| for cn in cols -> (colValues.[cn]  :?>  TypedDTO.Static).Value()  |]  ))
+                                                  | (Declaration(Fun(name), table)) ->  None)
+                  |> Map.ofList                
+           )
+        distDTO, knowDTO
     
 
     // DEFINITIONS ------------------------------------
@@ -86,7 +109,7 @@ module CrossValidation =
            //  let (_,_,(typedCoreSchema,_)) = Elaborator.elaborate(inputSchema)
              let dbin = DTOToTypedDTO.readFromDTO typedCoreSchema inputDTO
              let (schema,ev , dbout) = 
-                  ExcelCompiler.latentModelStraight( 
+                  TabularCompiler.latentModelStraight( 
                                                (* file *) "CrossValidationTemp",
                                                (* name *) "CrossValidationTemp",
                                                (* schema *) typedCoreSchema,
@@ -99,7 +122,7 @@ module CrossValidation =
                                                (* iterations *) 50,
                                                (* seed *) 123567,
                                                (* cstLongToken *) new System.Threading.CancellationToken())
-             let (distDTO,knowDTO) = ExcelCompiler.dbToKnowAndDist typedCoreSchema dbout
+             let (distDTO,knowDTO) = dbToKnowAndDist typedCoreSchema dbout
              distDTO
 
     let getClasscolFromDTO (dto:DTO) classcolIdx = 

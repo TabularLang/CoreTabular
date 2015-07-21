@@ -18,8 +18,6 @@ module Erase =
    | Var _  -> e
    | Const _ -> e
    | Prim (p,es) -> Prim(p,List.map expr es) 
-   //| S.Dist(S.GaussianFromMeanAndPrecision,es) -> sprintf "Gaussian(%O)" (exps es)
-   //| S.Dist(S.GammaFromShapeAndScale,es) -> sprintf "Gamma(%O)" (exps es)
    | Dist(d,es) -> Dist(d,List.map expr es) 
    | SizeOf(t) -> e
    | DeRef(e1,tn,cn) -> DeRef(expr e1,tn,cn)

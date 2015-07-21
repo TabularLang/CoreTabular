@@ -94,21 +94,6 @@ module Translate  =
       match et with 
       | TypedExp(e,t) ->                 
         match e with
-        //TBC
-        (*
-        | T.Const ((T.IntConst i) as c)->
-          (match t with 
-             T_Int -> k (Const c )
-           | T_Upto(TypedExp(en,_)) ->
-              let r = match en with 
-                      | T.Const(IntConst n) -> rangeOf n 
-                      | T.SizeOf tn -> range(tn)
-              let vc = fresh()
-              Seq (LetVar(vc,Const c),
-                   Seq (SetValueRange(vc,r),
-                        k(Var vc)))
-          )
-          *)
         | T.Const c -> k (Const c)
         | T.SizeOf t-> adjust copyVar k (Var(size t ))
         | T.Prim(T.Factor(T.FactorName("BreakSymmetry")),[e1]) ->
@@ -144,17 +129,6 @@ module Translate  =
                                                   Seq (SetTo(ret,Var wi),Skip))),
                                         k (Var ret))))))
                 ))
-           
-        // this special-casing is a hack to avoid a bug in Infer.NET 2.5
-        | T.Array es when List.forall isConstant es && false ->
-            match t with 
-            | T_Array(et,_) ->
-                let obj = trConstantArray et es
-                let r = rangeOf (RConst es.Length,depth t)
-                let av = fresh()
-                Seq(LetArray(av,r,et),
-                    Seq(ObserveValue(av,t,obj),
-                        k (Var av)))
         | T.Array es ->
             match t with 
             | T_Array(et,_) ->
@@ -165,19 +139,6 @@ module Translate  =
                      compileApp true (fun vs -> vs) es (fun vs ->
                        let sets = List.mapi (fun i v -> AssignIndex(av,Const (IntConst i),v)) vs
                        List.foldBack (fun s ss -> Seq(s,ss)) sets (k (Var av))))
-                       
-        // this disabled special-casing is a hack to avoid a bug in Infer.NET 2.5
-        |  T.ForLoop(x,TypedExp((T.Const (IntConst n)) as e1 ,_), (TypedExp(_,et) as e2)) when false && isConstant e2  ->
-                let k = adjust copyVar k
-                let obj = trConstantArray et [ for i in 1..n -> e2]
-                let r = rangeOf (RConst n,depth t)
-                let av = fresh()
-                Seq(LetArray(av,r,et),
-                    Seq(ObserveValue(av,t,obj),
-                        k (Var av)))
-        // this is a special case hack to allow nested one-dimensional array expressions within loops that loop over the same range.
-        // this differs from the general case code below in copying the range before iterating over the copy - 
-        // See Bugs\RangeBug.xlsx
         | T.ForLoop(x,TypedExp((T.Const (IntConst _) | T.SizeOf _) as e1 ,_),
                       (TypedExp(_,t2) as et2)) when depth t = 1  ->
             let k =  adjust copyVar k
@@ -189,34 +150,11 @@ module Translate  =
             let CEx = CE.Add(x,(None,T_Upto(e1)))
             let s = fresh()
             //let x = fresh()
-            Seq(LetArray(av,r,t2),//LetArray(av,r,t2)
+            Seq(LetArray(av,r,t2),
                 Seq(CloneRng(s,r),
                  Seq(ForLoop(s,x,
                              trLocalExp true tn TE CEx et2 (fun E -> Assign(av,s,E))),
-                              // trLocalExp true tn TE CEx et2 (fun E -> AssignIndex(av,Var x,E))),
                         k (Var av))))
-    (* works)
-        | T.ForLoop(x,TypedExp((T.Const (IntConst _) | T.SizeOf _) as e1 ,_),
-                      (TypedExp(_,t2) as et2)) ->
-            // What is the right code for this?
-            let k =  adjust copyVar k
-            let r = match e1 with  
-                    | T.Const (IntConst i) -> rangeOf i
-                    | T.SizeOf tn -> range(tn)
-                   // | _ -> failwith "impossible"x
-            let s = fresh()
-            let av = fresh()
-            let CEx = CE.Add(x,(None,T_Upto(e1)))
-            let s = r
-            //let x = fresh()
-            //Seq(CloneRng(s,r), 
-            Seq(LetArray(av,s,t2),//LetArray(av,r,t2)
-                Seq(ForLoop(s,x,
-                            //    trLocalExp true tn TE CEx et2 (fun E -> Assign(av,s,E))),
-                            trLocalExp true tn TE CEx et2 (fun E -> AssignIndex(av,Var x,E))),
-                    k (Var av)))
-            //)
-   *)
         | T.ForLoop(x,TypedExp((T.Const (IntConst _) | T.SizeOf _) as e1 ,_),
                       (TypedExp(_,t2) as et2)) ->
             let k =  adjust copyVar k
@@ -227,35 +165,10 @@ module Translate  =
             let av = fresh()
             let CEx = CE.Add(x,(None,T_Upto(e1)))
             //let x = fresh()
-            Seq(LetArray(av,r,t2),//LetArray(av,r,t2)
+            Seq(LetArray(av,r,t2),
                  Seq(ForLoop(r,x,
                              trLocalExp true tn TE CEx et2 (fun E -> Assign(av,r,E))),
-                              // trLocalExp true tn TE CEx et2 (fun E -> AssignIndex(av,Var x,E))),
                         k (Var av)))
-            //)
-   (*
-        | T.ForLoop(x,TypedExp((T.Const (IntConst _) | T.SizeOf _) as e1 ,_),
-                      (TypedExp(_,t2) as et2)) ->
-            // What is the right code for this?
-            let k =  adjust copyVar k
-            let r = match e1 with  
-                    | T.Const (IntConst i) -> rangeOf i
-                    | T.SizeOf tn -> range(tn)
-                   // | _ -> failwith "impossible"
-            let s = fresh()
-            let av = fresh()
-            let CEx = CE.Add(x,(None,T_Upto(e1)))
-            //let x = fresh()
-            Seq(LetArray(av,r,t2),
-                Seq(CloneRng(s,r), 
-                 //LetArray(av,r,t2)
-                    Seq(ForLoop(s,x,
-                                //trLocalExp true tn TE CEx et2 (fun E -> Assign(av,s,E))),
-                                trLocalExp true tn TE CEx et2 (fun E -> AssignIndex(av,Var x,E))),
-                        k (Var av)))
-            )
-    *)
-      
          | T.Scan(s,x,
                       (TypedExp(_,t0) as et0),(TypedExp(_,t1) as et1),(TypedExp(_,t2) as et2)) when false  ->
             // What is the right code for this?
@@ -290,27 +203,6 @@ module Translate  =
                                             Skip)))
                                ),
                         k (Var av))))))
-        (*
-            let bind Es Ex = Seq(LetVar(s,Es),
-                                 Seq(LetVar(x,Ex),
-                                     trLocalExp tn TE CEsx et0 (fun E -> Assign(av,rc,E))))
-            //let foo() = trLocalExp tn TE CE (E.Let(s,e0,Let(x,T.Subscript( (fun E -> Assign(av,rc,E))
-            compileExp et1 (fun E1 ->
-            compileExp et2 (fun E2 ->
-              Seq(CloneRng(rc,r), 
-                Seq(LetArray(av,rc,t0),
-                    Seq(ForLoop(rc,i,
-                                Seq(LetVar(b,Prim(Tabular.Eq,[Var i;Const 0])),  
-                                    Seq(If(b, 
-                                           bind E1 (Index(E2,Var i))),
-                                        Seq(IfNot(b, 
-                                                  bind (Index(Var av,Prim(Tabular.Minus,[Var i;Const 1])))
-                                                       (Index(E2,Var i))),
-                                            Skip)))
-                               ),
-                         k (Var av))))))
-        *)
-
         | T.Var c -> 
           let k = adjust copyVar k 
           match CE.[c] with
@@ -318,19 +210,6 @@ module Translate  =
            | (Some B.W,_) -> k (Var(col(tn,c)))
            | (Some B.Y,_) -> k (IndexRng  (Var(col(tn,c)),range tn )) 
            | (None,_) -> k(Var c) //for let and for bound variables (not in CE)
-        (*
-        | T.Var c when (not copyVar) -> //when CE.ContainsKey(c) -> 
-        | T.Var c when copyVar -> 
-           let c' = fresh()
-           match CE.[c] with
-           | (Some B.H,_) 
-           | (Some B.W,_) -> Seq(LetCopy(c',Var(col(tn,c))),
-                                 k (Var c'))
-           | (Some B.Y,_) ->  Seq(LetCopy(c',IndexRng  (Var(col(tn,c)),range tn)),
-                                  k(Var c'))
-           | (None,_) -> Seq(LetCopy(c',Var c),
-                                  k(Var c')) //for let and for bound variables (not in CE)
-         *)
         | T.DeRef (TypedExp(_,t1) as e1,tn',d) when Types.det t1 = D->
             let k = adjust copyVar k 
             match t1 with 
@@ -357,22 +236,12 @@ module Translate  =
                              Seq (CloneRng(cr,r),
                                   Seq (SetValueRange(ve,cr),
                                        Seq(Switch(ve,
-                                                 Seq (//LetVar(wi,Index(Var(tn'd),Var ve)), 
-                                                      LetCopy(wi,Index(Var(tn'd),Var ve)), // best to copy?
+                                                 Seq (LetCopy(wi,Index(Var(tn'd),Var ve)), // best to copy?
                                                       Seq (SetTo(ret,Var wi),Skip))),
                                            k (Var ret))))))
                     )
-             // compileApp false (fun [v1] -> Index(Var(tn'd),v1)) [e1] k
             | _ -> failwithf "BUG: compiling %A" e
         | T.Ref (tn,c) ->
-           (*
-           if copyVar 
-           then //TBR
-             let c' = fresh()
-             Seq(LetCopy(c',Var(col(tn,c))),
-                         k (Var c'))
-           else
-           *)
            let k = adjust copyVar k
            k (Var(col(tn,c)))
         | T.If(e1,e2,e3) ->
@@ -392,58 +261,7 @@ module Translate  =
            compileExp false e1 
                   (fun E1 ->
                        Seq(LetVar(x,E1),trLocalExp copyVar tn TE CEx e2 k))  
-(* old symmetry breaking      
-        | T.Prim(T.Factor(T.FactorName("BreakSymmetry")),[T.TypedExp(T.Dist(d,es),_)])    
         | T.Dist(d,es) -> 
-           let breakSymmetry = match e with T.Prim _ -> true | _ -> false
-           //TODO: use dep. type of d to drive range/exp interpretation of es
-           match d,es with
-           | (Bernoulli,[TypedExp(e0,_)]) ->
-             match e0 with
-             | T.Const(T.RealConst(p)) when breakSymmetry ->
-               let b = Rand.Double() < p
-               let o = Distributions.Bernoulli.PointMass(b)
-               compileApp false (fun vs ->InitialiseTo(Dist(d,vs),o)) es k 
-             | T.Dist(Beta,[TypedExp(T.Const(T.RealConst(a)),_);TypedExp(T.Const(T.RealConst(b)),_)]) when breakSymmetry ->
-               let p = a / (a+b)
-               let b = Rand.Double() < p
-               let o = Distributions.Bernoulli.PointMass(b)
-               compileApp false (fun vs ->InitialiseTo(Dist(d,vs),o)) es k 
-             | _ -> 
-                compileApp false (fun vs -> Dist(d,vs)) es k 
-           | (Dirichlet | DirichletUniform |DirichletSymmetric), ((TypedExp(e0,_))::es) ->
-             match e0 with 
-             | T.Const(IntConst n) when breakSymmetry ->
-                let r = rangeOf n 
-                let o = dirichletInit(n)
-                compileApp false (fun vs ->InitialiseTo(Dist(d,(Rng r) ::vs),o)) es k 
-             | _ ->
-             let r = match e0 with 
-                     | T.Const(IntConst n) -> rangeOf n 
-                     | T.SizeOf(tn) -> range(tn)
-                     | _ -> failwithf "BUG: %A has non-constant argument %A" d e0 
-             compileApp false (fun vs -> Dist(d,(Rng r) ::vs)) es k 
-           | Discrete, ((TypedExp(e0,_))::es) ->
-             match e0 with 
-             | T.Const(IntConst n) when breakSymmetry ->
-               // add symmetry breaking
-               let r = rangeOf n
-               let v = Distributions.Dirichlet([| for i in 1 .. n -> 10.0 |]).Sample()
-               let o = Distributions.Discrete(v)
-               //let o = Distributions.Discrete.PointMass(Rand.Int(n),n) :> obj
-               compileApp false (fun vs -> InitialiseTo(Dist(d,(Rng r) ::vs),o)) es k
-             | _ -> 
-               let r = match e0 with 
-                     | T.Const(IntConst n) -> rangeOf n 
-                     | T.SizeOf(tn) -> range(tn)
-                     | _ -> failwithf "BUG: %A has non-constant argument %A" d e0 
-               compileApp false (fun vs -> Dist(d,(Rng r) ::vs)) es k   
-             | _ -> failwithf "BUG: %A has non-constant argument %A" d e0 
-           | _,_ ->
-           compileApp false (fun vs -> Dist(d,vs)) es k 
-  *)
-        | T.Dist(d,es) -> 
-           //TODO: use dep. type of d to drive range/exp interpretation of es
            match d,es with
            | (Dirichlet | DirichletUniform |DirichletSymmetric), ((TypedExp(e0,_))::es) ->
              let r = match e0 with 
@@ -469,12 +287,6 @@ module Translate  =
   type KE = (E -> S) -> S
   type KEs = (Es -> S) -> S
 
-  // TODO: simplify MT (legacy)
-  type MT = {TH: ColumnType list;TW: ColumnType list; TX: ColumnType; TY: ColumnType}
-  
-
-  
-  
 
   let rec trModel tn TE CE  mt : KE =
       match mt with 

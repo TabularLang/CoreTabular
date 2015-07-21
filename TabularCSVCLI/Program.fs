@@ -63,10 +63,10 @@ module CLI =
         ensureDir outputDir
 
         let (typedCoreSchema,le, odb)  as res =
-            ExcelCompiler.compileNew(verbose,true,(if descSaveCSharpCode then outputDir + @"\" + modelshortname + ".cs" else null), 
+            TabularCompiler.compileNew(verbose,true,(if descSaveCSharpCode then outputDir + @"\" + modelshortname + ".cs" else null), 
                                         modelFileName,modelshortname,
                                         typedCoreSchema, dbin, oAlgo, breakSym, 
-                                        Some iterations, ExcelCompiler.defaultRandomSeed, None)
+                                        Some iterations, TabularCompiler.defaultRandomSeed, None)
         // phase 5 - save the results
         if saveTypedModels then
             let modelName = modelshortname

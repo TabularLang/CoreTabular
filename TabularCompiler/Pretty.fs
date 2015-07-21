@@ -107,9 +107,6 @@ module Pretty =
         | Const (RealConst r) -> r.ToString()
         | Const (BoolConst b) -> b.ToString()
         | Const (StringConst b) -> sprintf "\"%A\"" (b.ToString())
-        //| DiscreteConst (i,n) ->  i.ToString() // TODO set value range                                
-       // | RealConst r ->  r.ToString()
-       // | BoolConst b ->  b.ToString()
         | IndexRng (e1,r) -> sprintf  "%O[ %O]" (EToCSoft e1) (rangeindex r) 
         | Index (e1,e2) -> sprintf "%O[ %O]" (EToCSoft e1) (EToCSoft e2) 
         | Prim(Prim.Gt,[e1;e2]) ->  sprintf "%O > %O" (EToCSoft e1) (EToCSoft e2) 

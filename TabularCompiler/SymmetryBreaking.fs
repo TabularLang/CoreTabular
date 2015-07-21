@@ -4,7 +4,6 @@ module SymmetryBreaking =
 
   module T = Syntax
   open Syntax
- // module Tabular = Syntax
   open Target
   open Ranges
   open Translate

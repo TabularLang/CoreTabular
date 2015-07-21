@@ -55,14 +55,12 @@
   <Import Project="$(FSharpTargetsPath)" Condition="Exists('$(FSharpTargetsPath)')" />
   <ItemGroup>
     <Compile Include="SchemaGraph.fs" />
-    <Compile Include="NewTabularSyntax.fs" />
+    <Compile Include="Syntax.fs" />
     <Compile Include="Erase.fs" />
     <Compile Include="Pretty.fs" />
     <Compile Include="DTO.fs" />
     <Compile Include="Tex.fs" />
     <Compile Include="Plates.fs" />
-    <Compile Include="Anglican.fs" />
-    <None Include="AndyScript.fsx" />
     <Compile Include="Help.fs" />
   </ItemGroup>
   <ItemGroup>

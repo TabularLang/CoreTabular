@@ -2,7 +2,6 @@
 
 module Ranges =
   module T = Syntax
-  //open T
   open Target
   type R = RSizeOf of T.TableName | RConst of int
   let ranges = new System.Collections.Generic.Dictionary<R*int,r>()
@@ -78,20 +77,11 @@ module Ranges =
      | T.Scan(s,x,e1,e2,e3) -> decRangesExp e1; decRangesExp e2; decRangesExp e3
      | T.Infer(d,es,x,y) ->  List.iter decRangesExp es // shouldn't really occur
      | T.TypedExp(e,t) -> decRangesExp e;decRangesColumnType t
-    // | _ -> failwithf "%A not supported" e
-
+ 
   and  decRangesModel m = 
        match m with 
        | T.MExp e -> decRangesExp e
        | T.TypedModel (m,((t1,t2),t3)) -> decRangesModel m; decRangesColumnType t1; decRangesColumnType t2; decRangesColumnType t3
-
- (*
-       | T.MIndexed(m,e1,e2) -> T.Array(decRangesModel m,[decRangesExp e1]) // e2 will be inferred...
-       | T.MCall("CGaussian",[]) -> T.CGaussian
-       | T.MCall("CBernoulli",[]) -> T.CBernoulli
-       | T.MCall("CDiscrete",[("N",e1)]) -> T.CDiscreteWith(decRangesExp e1)
-       | T.MCall("CDiscrete",[]) -> T.CDiscreteWith(T.Const(2))
-  *)
        | _ -> failwithf "decRanges: unexpected non-core model" 
 
   and depth t =
