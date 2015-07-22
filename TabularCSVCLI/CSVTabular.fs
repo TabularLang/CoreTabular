@@ -16,6 +16,7 @@ module CSVTabular =
     let getFreshOutputDirName = getFreshName System.IO.Directory.Exists  
     let getFreshFileName      = getFreshName System.IO.File.Exists
     
+    let _ = SchemaParser.emptyline;
 
     let getSchema separator (modelFilePath : string) =
         let clean (s:string)= s |> String.collect(fun c -> if c = '\"' then "" else c.ToString())

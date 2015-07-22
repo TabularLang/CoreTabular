@@ -30,7 +30,7 @@
     <DocumentationFile>bin\Debug\TabularCSVCLI.XML</DocumentationFile>
     <Prefer32Bit>false</Prefer32Bit>
     <StartArguments>--verbose --model "TrueSkill.csv"  --savemodels --algo expectationpropagation</StartArguments>
-    <StartWorkingDirectory>..\..\..\..\sandbox\CSV\dataloop</StartWorkingDirectory>
+    <StartWorkingDirectory>D:\tfs\mlp\pp\CoreTabular\Samples\TrueSkill\</StartWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
