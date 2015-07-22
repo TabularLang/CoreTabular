@@ -39,7 +39,8 @@ module CLI =
         let  dataDirectoryName = dataDirectoryName |> completePath executionDirectory
         let  outputDirectoryName = mapfspath (completePath executionDirectory) outputDirectoryName 
         //phase 0 - Read schema
-        let (error, model, _, settings) = getSchema (defaultArg oSeparator "," ) (modelFileName |> completePath executionDirectory)
+        let sep = if System.IO.Path.GetExtension(modelFileName) = "txt" then "\t" else ","
+        let (error, model, _, settings) = getSchema (defaultArg oSeparator sep ) (modelFileName |> completePath executionDirectory)
         //phase 1 - Check and elaborate
         let (Some(schema)) = model
         Schema.checkSchema schema 

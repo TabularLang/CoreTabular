@@ -5,7 +5,8 @@ module CSVTabular =
     open System.IO
     open System.Text.RegularExpressions
     open MicrosoftResearch.Infer
-
+    open Microsoft.VisualBasic.FileIO
+    
     let getFreshName fExists outname = 
         let rec go optNum =
             let name = outname + (match optNum with | Some i -> i.ToString() | _ -> "")
@@ -16,16 +17,22 @@ module CSVTabular =
     let getFreshOutputDirName = getFreshName System.IO.Directory.Exists  
     let getFreshFileName      = getFreshName System.IO.File.Exists
     
-    let _ = SchemaParser.emptyline;
-
+  
     let getSchema separator (modelFilePath : string) =
-        let clean (s:string)= s |> String.collect(fun c -> if c = '\"' then "" else c.ToString())
-        let mclean (a,b,c,d,e) = clean a, clean b, clean c, clean d, e
-        let lines = File.ReadAllLines(modelFilePath) 
-                  |> Array.map  (fun   l -> Regex.Split(l, separator + """(?=(?:[^\"]|\"[^\"]*\")*$)""")) //balanced by \" split
-                  |> Array.mapi (fun i l-> if l.Length <> 4 then failwith (sprintf "unexpected line %A" i) else mclean(l.[0],l.[1],l.[2],l.[3],None))
-                  |> Array.toList
-        SchemaParser.readSchema (List.append lines  ([("","","","",None)]))
+         let tfp = new TextFieldParser(modelFilePath)
+         tfp.TextFieldType <- FieldType.Delimited
+         tfp.Delimiters <- [| separator |]
+         tfp.HasFieldsEnclosedInQuotes <- true
+         let acc = new System.Collections.Generic.List<string[]>()
+         let col (line:string[]) i = if i < line.Length then line.[i] else ""
+         let rec loop cols = 
+             if tfp.EndOfData then
+                List.rev cols
+             else 
+             let line = tfp.ReadFields() in
+                 loop  ((col line 0,col line 1,col line 2, col line 3, None)::cols)
+         tfp.Close()
+         SchemaParser.readSchema (loop ([("","","","",None)]))
 
 
     open System.Collections

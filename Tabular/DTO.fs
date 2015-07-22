@@ -534,6 +534,8 @@ module DistributionPrinter =
          let acc = new System.Collections.Generic.List<string[]>()
          while (not tfp.EndOfData) do
             acc.Add(tfp.ReadFields())
+         tfp.Close()
+         tfp.Dispose()
          let size = acc.Count
          let get cn = 
              let col = Array.create<string> size null
