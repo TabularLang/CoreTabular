@@ -1,0 +1,4 @@
+"Match","Player1","Player2","Win1"
+0,"Alice","Bob",False
+1,"Bob","Cynthia",False
+2,"Alice","Cynthia",
