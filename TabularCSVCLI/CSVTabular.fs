@@ -19,21 +19,28 @@ module CSVTabular =
     
   
     let getSchema separator (modelFilePath : string) =
-         let tfp = new TextFieldParser(modelFilePath)
+         use tfp = new TextFieldParser(modelFilePath)
          tfp.TextFieldType <- FieldType.Delimited
+         tfp.TrimWhiteSpace <- false
          tfp.Delimiters <- [| separator |]
          tfp.HasFieldsEnclosedInQuotes <- true
          let acc = new System.Collections.Generic.List<string[]>()
          let col (line:string[]) i = if i < line.Length then line.[i] else ""
-         let rec loop cols = 
+         let addEmpty (pl:System.Int64) (cl:System.Int64) cols =
+             if cl = -1L then cols
+             else let rec addEmpty n cols = if n <= 1L then cols else addEmpty (n-1L) (("","","","",None)::cols)  
+                  addEmpty (cl - pl) cols
+         let rec loop pl cols = 
              if tfp.EndOfData then
-                List.rev cols
+                tfp.Close()
+                List.rev (("","","","",None)::cols)
              else 
              let line = tfp.ReadFields() in
-                 loop  ((col line 0,col line 1,col line 2, col line 3, None)::cols)
-         tfp.Close()
-         SchemaParser.readSchema (loop ([("","","","",None)]))
-
+             let nl = tfp.LineNumber in
+             loop nl ((col line 0,col line 1,col line 2, col line 3, None)::(addEmpty pl nl cols))
+         let cols = loop tfp.LineNumber [] //([("","","","",None)])
+         SchemaParser.readSchema cols
+         
 
     open System.Collections
     open System.Linq

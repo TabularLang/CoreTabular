@@ -16,7 +16,7 @@ module SchemaParser =
 
   //for fslexx character level operations
   let parseCol p c s = try p s with | e -> raise (LexParseException (sprintf "column %A : could not parse  %A" c s))
-  let parseOther p s = try p s with | e -> raise (LexParseException (sprintf "could not parse  %A" s))
+  let parseOther p s = try p s with | e -> raise (LexParseException (sprintf "could not parse %A" s))
 
   type token = Id of string * string * string * string * int option
   with override this.ToString() = match this with Id(s1,s2,s3,s4,_) -> sprintf "%s %s %s %s ..." s1 s2 s3 s4 

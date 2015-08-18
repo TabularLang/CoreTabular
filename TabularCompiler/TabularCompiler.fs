@@ -38,6 +38,9 @@ module TabularCompiler =
  open TypedDTO
  let compileNew (verbose: bool, collectStats:bool, extractCode:string, file:string,name:string,typedCoreSchema:Schema, dbin:DataBase, algo:IAlgorithm option, breakSymmetry, numberOfIterations : int option, randomSeed,cts: CancellationToken option) =
       MicrosoftResearch.Infer.Maths.Rand.Restart(randomSeed)
+      let tmpDir= System.IO.Path.GetTempPath() + @"Tabular"
+      if not(System.IO.Directory.Exists tmpDir)
+      then  System.IO.Directory.CreateDirectory(tmpDir) |> ignore
       let total = new System.Diagnostics.Stopwatch()
       do total.Start()
       let sw = new System.Diagnostics.Stopwatch()
@@ -60,7 +63,7 @@ module TabularCompiler =
       let ie = new InferenceEngine(defaultArg algo (new ExpectationPropagation() :> _))
       ie.ShowMsl <- verbose
       ie.ShowTimings <- verbose; ie.ShowProgress <- verbose;  ie.Compiler.GenerateInMemory <- true; ie.Compiler.WriteSourceFiles <- verbose; ie.Compiler.IncludeDebugInformation <- false
-      ie.Compiler.GeneratedSourceFolder <- System.IO.Path.GetTempPath() + @"Tabular\GeneratedSource"
+      ie.Compiler.GeneratedSourceFolder <- System.IO.Path.Combine(tmpDir,"GeneratedSource")
       lazyWriteLine <| lazy (sprintf "Generated Source Folder: %s" (ie.Compiler.GeneratedSourceFolder))
       ie.NumberOfIterations <- defaultArg numberOfIterations 10
       let infer (dbin: DataBase)  = 
@@ -231,9 +234,9 @@ module TabularCompiler =
              let stats = sprintf "\\\\%s\n %s & %O & %O & %O & %O & %O & %O & %s & %O & %O \\\\ \n" file name rows cells compileTime inferenceTime interpretedQueryTime compiledQueryTime (ie.Algorithm.ShortName) (ie.NumberOfIterations) totalTime
              let row = header+stats 
              lazyWriteLine <| lazy row
-             let statsfile = System.IO.Path.GetTempPath() + @"Tabular\allstats.txt"
+             let statsfile = System.IO.Path.Combine(tmpDir,"allstats.txt")
              System.IO.File.AppendAllText(statsfile,row)
-             let statfile = System.IO.Path.GetTempPath() + @"Tabular\"+name+".txt"
+             let statfile = System.IO.Path.Combine(tmpDir,name+".txt")
              System.IO.File.AppendAllText(statfile,row)
              //let fulltex = Tex.schemaToStr (typedCoreSchema)
              //let texfile = System.IO.Path.GetTempPath() + @"Tabular\"+name+".tex"

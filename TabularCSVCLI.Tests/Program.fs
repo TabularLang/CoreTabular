@@ -3,17 +3,27 @@
 open NUnit.Framework
 open MicrosoftResearch.Infer.Tabular.CLI
 
-let publicData = __SOURCE_DIRECTORY__  + @"\..\..\TabularDataPublic"
+let runTest modelFileName =
+        let modelFileName = System.IO.Path.GetFullPath(modelFileName)
+        let exeDir = System.IO.Path.GetDirectoryName(modelFileName)
+        System.Environment.CurrentDirectory <- exeDir
+        runCLI "." None modelFileName "." false None None (Reuse "verified") true true true true
+
+[<Test>]
+let TrueSkill() =    
+    runTest "..\..\..\Samples\TrueSkill\TrueSkill.csv"
+    Assert.True(true)
 
 
 [<Test>]
-let ``Generate reference data``() =    
-    let runTest modelFileName =
-        runCLI publicData None modelFileName "." false None None (Reuse "verified") true true true true
-
-    runTest "Clustering - Multivariate Faithful.csv"
+let FaithfulCsv() =    
+    runTest "..\..\..\Samples\Faithful\Model.csv"
     Assert.True(true)
 
+[<Test>]
+let FaithfulTxt() =    
+    runTest "..\..\..\Samples\Faithful\Model.txt"
+    Assert.True(true)
 
 [<EntryPoint>]
 let main argv = 

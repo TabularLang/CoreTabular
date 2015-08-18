@@ -526,7 +526,7 @@ module DistributionPrinter =
      open TypedDTO
      //type DataSource<'Src> = TableName * ID -> int * ColumnType * (ColumnName -> 'Src) (* * Map<IComparable, int>> *)
      let read dir : DataSource<string> = fun (tn (*,id*)) ->
-         let tfp = new TextFieldParser(System.IO.Path.Combine([|dir;tn+".csv"|]))
+         use tfp = new TextFieldParser(System.IO.Path.Combine([|dir;tn+".csv"|]))
          tfp.TextFieldType <- FieldType.Delimited
          tfp.Delimiters <- [| "," |]
          let headers = tfp.ReadFields()
@@ -535,7 +535,6 @@ module DistributionPrinter =
          while (not tfp.EndOfData) do
             acc.Add(tfp.ReadFields())
          tfp.Close()
-         tfp.Dispose()
          let size = acc.Count
          let get cn = 
              let col = Array.create<string> size null
