@@ -34,6 +34,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Faithful", "Faithful", "{23961F19-6628-4782-B343-94DE7CF3B6B5}"
 	ProjectSection(SolutionItems) = preProject
 		Samples\Faithful\faithful.csv = Samples\Faithful\faithful.csv
+		Samples\Faithful\Model.csv = Samples\Faithful\Model.csv
 		Samples\Faithful\Model.txt = Samples\Faithful\Model.txt
 		Samples\Faithful\run.bat = Samples\Faithful\run.bat
 	EndProjectSection

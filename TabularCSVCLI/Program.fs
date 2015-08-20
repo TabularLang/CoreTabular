@@ -135,7 +135,7 @@ module CLI =
             writer "saveTypedModels    "  saveTypedModels            
 
             try 
-                runCLI (System.IO.Directory.GetCurrentDirectory()) oSeparator modelFileName dataDirectoryName sample oIterations oAlgo (Fresh outputDirectoryName) verbose descSaveCSharpCode breakSym saveTypedModels 
+                runCLI (System.IO.Directory.GetCurrentDirectory()) oSeparator modelFileName dataDirectoryName sample oIterations oAlgo (Reuse outputDirectoryName) verbose descSaveCSharpCode breakSym saveTypedModels 
             with | e -> 
                         Console.SetOut(realConsole);
                         System.Console.WriteLine(e.Message)

@@ -26,19 +26,19 @@ module CSVTabular =
          tfp.HasFieldsEnclosedInQuotes <- true
          let acc = new System.Collections.Generic.List<string[]>()
          let col (line:string[]) i = if i < line.Length then line.[i] else ""
-         let addEmpty (pl:System.Int64) (cl:System.Int64) cols =
-             if cl = -1L then cols
+         let addEmptyLines (cl:System.Int64) (nl:System.Int64) cols =
+             if nl = -1L then cols
              else let rec addEmpty n cols = if n <= 1L then cols else addEmpty (n-1L) (("","","","",None)::cols)  
-                  addEmpty (cl - pl) cols
-         let rec loop pl cols = 
+                  addEmpty (nl - cl) cols
+         let rec loop cl cols = 
              if tfp.EndOfData then
                 tfp.Close()
                 List.rev (("","","","",None)::cols)
              else 
              let line = tfp.ReadFields() in
              let nl = tfp.LineNumber in
-             loop nl ((col line 0,col line 1,col line 2, col line 3, None)::(addEmpty pl nl cols))
-         let cols = loop tfp.LineNumber [] //([("","","","",None)])
+             loop nl ((col line 0,col line 1,col line 2, col line 3, None)::(addEmptyLines cl nl cols))
+         let cols = loop tfp.LineNumber [] 
          SchemaParser.readSchema cols
          
 
