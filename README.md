@@ -4,7 +4,7 @@ This is the source code for the Core Tabular command-line compiler, tc.exe.
 
 See LICENSE.txt
 
-#Pre-requisites:
+#Requirements:
 
  1. Infer.NET v2.6
 
@@ -21,9 +21,12 @@ In Visual Studio 2013:
   2. In Solution Explorer window, right-click on the solution and "Enable nuget package restore".
   3. Click Build.
 
+Or just type msbuild from the command-line.
+
 #Documentation:
 
-tc.exe --help gives command line options.
+tc.exe gives command line options.
+tc.exe --help gives a summary of tabular syntax
 
 #Samples:
 
