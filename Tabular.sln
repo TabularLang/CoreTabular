@@ -3,13 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.30723.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{91E26D5C-1E2A-46AC-89C6-0ECFDCCFFE75}"
-	ProjectSection(SolutionItems) = preProject
-		.nuget\NuGet.Config = .nuget\NuGet.Config
-		.nuget\NuGet.exe = .nuget\NuGet.exe
-		.nuget\NuGet.targets = .nuget\NuGet.targets
-	EndProjectSection
-EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Tabular", "Tabular\Tabular.fsproj", "{CDFB169A-3CA6-4E26-B61E-0A910F4BCD5D}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Parsing", "Parsing\Parsing.fsproj", "{4D13B34E-2527-4295-A8B3-7770595147E7}"
@@ -27,6 +20,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{53617BD3-49E1-478A-8008-BD891DC31375}"
 	ProjectSection(SolutionItems) = preProject
 		License.txt = License.txt
+		README.md = README.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{73ECA732-1709-4BF6-A83D-EEE75054A8A9}"
@@ -45,6 +39,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TrueSkill", "TrueSkill", "{
 		Samples\TrueSkill\Players.csv = Samples\TrueSkill\Players.csv
 		Samples\TrueSkill\run.bat = Samples\TrueSkill\run.bat
 		Samples\TrueSkill\TrueSkill.csv = Samples\TrueSkill\TrueSkill.csv
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{547741AA-B9BF-43A2-BCDF-37E9C8586E7F}"
+	ProjectSection(SolutionItems) = preProject
+		.nuget\NuGet.Config = .nuget\NuGet.Config
+		.nuget\NuGet.exe = .nuget\NuGet.exe
+		.nuget\NuGet.targets = .nuget\NuGet.targets
 	EndProjectSection
 EndProject
 Global

@@ -87,7 +87,6 @@
     <Compile Include="Parsing.fs" />
     <Compile Include="SchemaParser.fs" />
     <None Include="app.config" />
-    <Content Include="manual compile.txt" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

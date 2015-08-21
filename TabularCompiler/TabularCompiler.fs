@@ -130,7 +130,7 @@ module TabularCompiler =
            let f = InferenceProgressEventHandler(fun _ ipea -> 
               System.Console.WriteLine("({0})",ipea.Iteration);
               if cts.IsSome && cts.Value.IsCancellationRequested then raise AbortException)
-           ie.add_ProgressChanged(f)
+           if verbose then ie.add_ProgressChanged(f)
            let eD = 
               try 
                   ie.Infer<Bernoulli>(evidence)
@@ -200,7 +200,7 @@ module TabularCompiler =
                trTables  Map.empty  Map.empty typedCoreSchema
 
            
-           ie.remove_ProgressChanged(f)
+           if verbose then ie.remove_ProgressChanged(f)
            do sw.Stop()
            let inferenceTime = sw.ElapsedMilliseconds 
            

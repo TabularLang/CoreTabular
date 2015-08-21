@@ -29,7 +29,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DocumentationFile>bin\Debug\TabularCSVCLI.XML</DocumentationFile>
     <Prefer32Bit>false</Prefer32Bit>
-    <StartArguments>--verbose --model "Model.txt"  --savemodels --algo expectationpropagation</StartArguments>
+    <StartArguments>--verbose --model "Model.txt"  --savemodels</StartArguments>
     <StartWorkingDirectory>D:\tfs\mlp\pp\CoreTabular\Samples\Faithful\</StartWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">

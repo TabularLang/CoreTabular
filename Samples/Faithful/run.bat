@@ -1,2 +1,2 @@
 set PATH=%PATH%;..\..\TabularCSVCLI\bin\debug\
-tc.exe --model Model.csv
+tc.exe --breaksymmetry --model Model.csv

@@ -95,6 +95,7 @@ module CLI =
         let separator          , descSeparator          = "separator"    , """separator used in for parsing model's CSV file. default to "," """
         let saveTypedModels    , descSaveTypeModel      = "savemodels"   , "saves the intermediate core and full models"
         let saveCsharpCode     , descSaveCSharpCode     = "savecsharp"   , "saves the emitted csharp code"
+        let help               , descHelp               = "help"         ,  "echo summary of syntax and exit"
 
         let defs = [
             {CLIArg.Command=modelFileName       ; Description= descmodelFileName        ; Required=true  ;NumberOfParameter = Fixed 1 }
@@ -107,10 +108,31 @@ module CLI =
             {CLIArg.Command=breakSym            ; Description= descbreakSym             ; Required=false ;NumberOfParameter = Fixed 0 } 
             {CLIArg.Command=separator           ; Description= descSeparator            ; Required=false ;NumberOfParameter = Fixed 1 } 
             {CLIArg.Command=saveTypedModels     ; Description= descSaveTypeModel        ; Required=false ;NumberOfParameter = Fixed 0 } 
-            {CLIArg.Command=saveCsharpCode      ; Description= descSaveCSharpCode       ; Required=false ;NumberOfParameter = Fixed 0 } 
+            {CLIArg.Command=saveCsharpCode      ; Description= descSaveCSharpCode       ; Required=false ;NumberOfParameter = Fixed 0 }
+            {CLIArg.Command=help    ; Description= descHelp                             ; Required=false ;NumberOfParameter = Fixed 0 } 
             ]
         try
             let parsedArgs = ParserCLI.parseArgs defs argv
+            
+            let help = TryGetValue parsedArgs help|> Option.isSome
+            
+            if help then 
+                  let lines = 
+                          ("Distribution types:" ::
+                           "---------------------------------" ::
+                           Checker.printDistTypes ()) @ 
+                          ("" ::
+                           "Builtin functions:" ::  
+                           "---------------------------------" ::
+                           List.map Pretty.declToStr Library.prelude
+                           @
+                           "Syntax:" ::  
+                           "---------------------------------" ::
+                           [Help.help])
+            
+                  List.iter (fun (s:string) -> System.Console.WriteLine(s)) lines;
+                  exit 0
+            
             let settingOrDirectory setting dir = match TryGetValue parsedArgs setting  with | Some(s) -> s.Head | _ -> dir
  
             let modelFileName       = parsedArgs.[modelFileName].Head 
@@ -122,8 +144,10 @@ module CLI =
             let oIterations         = TryGetValue parsedArgs iterations         |> Option.map (fun v -> Convert.ToInt32(v.Head))
             let oSeparator          = TryGetValue parsedArgs separator          |> Option.map (fun v -> System.Text.RegularExpressions.Regex.Unescape(v.Head).Chars(0).ToString())
             let saveTypedModels     = TryGetValue parsedArgs saveTypedModels    |> Option.isSome
-            let descSaveCSharpCode  = TryGetValue parsedArgs descSaveCSharpCode |> Option.isSome
+            let saveCSharpCode      = TryGetValue parsedArgs saveCsharpCode |> Option.isSome
+
             let oAlgo               = TryGetValue parsedArgs algo               |> Option.map (fun v -> tryFindAlgo v.Head)
+            
 
             let writer left right = writeStd verbose realConsole (sprintf "%s:  %A" (pad 20 left) right)
             writer "modelFileName      "  modelFileName      
@@ -131,11 +155,11 @@ module CLI =
             writer "outputDirectoryName"  outputDirectoryName
             writer "verbose            "  verbose            
             writer "breakSym           "  breakSym            
-            writer "separator          "  oSeparator            
+            writer "separator          "  oSeparator  
             writer "saveTypedModels    "  saveTypedModels            
-
+            
             try 
-                runCLI (System.IO.Directory.GetCurrentDirectory()) oSeparator modelFileName dataDirectoryName sample oIterations oAlgo (Reuse outputDirectoryName) verbose descSaveCSharpCode breakSym saveTypedModels 
+                runCLI (System.IO.Directory.GetCurrentDirectory()) oSeparator modelFileName dataDirectoryName sample oIterations oAlgo (Reuse outputDirectoryName) verbose saveCSharpCode breakSym saveTypedModels 
             with | e -> 
                         Console.SetOut(realConsole);
                         System.Console.WriteLine(e.Message)
