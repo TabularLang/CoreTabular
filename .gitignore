@@ -1,0 +1,4 @@
+bin/
+obj/
+.nuget/
+packages/*.nupkg
