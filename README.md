@@ -28,9 +28,12 @@ Or just type msbuild from the command-line.
 tc.exe gives command line options.
 tc.exe --help gives a summary of tabular syntax
 
+Models may be written a comma separate .csv files or tab separated .txt files.
+The latter have the advantage that fields containing "," need not be wrapped in quotes ("...").
+
 #Samples:
 
-The project comes with two sample application, Samples\TrueSkill and
+The project comes with two sample applications in folders Samples\TrueSkill and
 Samples\Faithful.  Each contains a script run.bat that invokes the
 Tabular compiler tc.exe to compile the model (from Tabular to
 Infer.NET) and run inference.
