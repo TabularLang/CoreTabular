@@ -2,7 +2,7 @@ This is the source code for the Core Tabular command-line compiler, tc.exe.
 
 #License
 
-See LICENSE.txt
+See file LICENSE.txt.
 
 #Requirements:
 
@@ -26,9 +26,9 @@ Or just type msbuild from the command-line.
 #Documentation:
 
 tc.exe gives command line options.
-tc.exe --help gives a summary of tabular syntax
+tc.exe --help gives a summary of tabular syntax.
 
-Models may be written a comma separate .csv files or tab separated .txt files.
+Models may be written as comma-separated .csv files or tab-separated .txt files.
 The latter have the advantage that fields containing "," need not be wrapped in quotes ("...").
 
 #Samples:
