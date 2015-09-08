@@ -37,7 +37,7 @@ module StringToInferNet =
          [<Extension>]
          static member inline Item(DTO dto, name) = dto.[name]
 
-
+#if false
     let findIDHeuristic tableName columnSet (suppliedID: ID option) (potentialKeyFromRelation : string option) = 
       let ps = System.Data.Entity.Design.PluralizationServices.PluralizationService.CreateService(System.Globalization.CultureInfo.GetCultureInfo("en-us"));
       let unique = List.fold (fun l e -> if l |> List.tryFind(fun x -> x = e) |> Option.isNone then e::l else l)[]
@@ -60,7 +60,7 @@ module StringToInferNet =
       | 0, _      -> FromPosition            , [ Log.Info (sprintf "the id  = from position, candidates where %A, none detected" candidates)]  //defaulting to position
       | 1, _      -> FromColumn validIds.Head, [ Log.Info ("the id  = column " + validIds.Head) ] 
       | _, _      -> FromColumn validIds.Head, [ Log.Warning (sprintf "found conflicting candidates for IDs : %A \n id chosen : %A " candidates (candidates  |> List.head))]
-
+#endif
 
 module TypedDTO = 
   open MicrosoftResearch.Infer.Tabular.Syntax
