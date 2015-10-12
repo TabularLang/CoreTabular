@@ -69,11 +69,11 @@
     <FsYaccOutputFolder>$(IntermediateOutputPath)</FsYaccOutputFolder>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="$(IntermediateOutputPath)\Parser.fs">
+    <Compile Include="$(IntermediateOutputPath)Parser.fs">
       <Visible>false</Visible>
       <Link>Parser.fs</Link>
     </Compile>
-    <Compile Include="$(IntermediateOutputPath)\Lexer.fs">
+    <Compile Include="$(IntermediateOutputPath)Lexer.fs">
       <Visible>false</Visible>
       <Link>Lexer.fs</Link>
     </Compile>

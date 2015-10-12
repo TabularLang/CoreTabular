@@ -32,7 +32,7 @@ module CLI =
       let trunc = String(msg |> Seq.truncate n  |> Seq.toArray)
       trunc.PadRight(n)
 
-    let completePath def path = if System.IO.Path.IsPathRooted(path) then path else def + @"\" + path
+    let completePath def path = if System.IO.Path.IsPathRooted(path) then path else System.IO.Path.Combine(def,path)
     let ensureDir dirname = if not (System.IO.Directory.Exists(dirname)) then System.IO.Directory.CreateDirectory(dirname) |> ignore
 
     let runCLI executionDirectory oSeparator modelFileName dataDirectoryName sample oIterations oAlgo outputDirectoryName verbose descSaveCSharpCode breakSym saveTypedModels = 
@@ -64,7 +64,7 @@ module CLI =
         ensureDir outputDir
 
         let (typedCoreSchema,le, odb)  as res =
-            TabularCompiler.compileNew(verbose,true,(if descSaveCSharpCode then outputDir + @"\" + modelshortname + ".cs" else null), 
+            TabularCompiler.compileNew(verbose,true,(if descSaveCSharpCode then System.IO.Path.Combine(outputDir,modelshortname + ".cs") else null), 
                                         modelFileName,modelshortname,
                                         typedCoreSchema, dbin, oAlgo, breakSym, 
                                         Some iterations, TabularCompiler.defaultRandomSeed, None)

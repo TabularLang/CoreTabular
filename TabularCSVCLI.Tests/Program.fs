@@ -10,18 +10,18 @@ let runTest modelFileName =
 
 [<Test>]
 let TrueSkill() =    
-    runTest "..\..\..\Samples\TrueSkill\TrueSkill.csv"
+    runTest (System.IO.Path.Combine("..","..","..","Samples","TrueSkill","TrueSkill.csv"))
     Assert.True(true)
 
 
 [<Test>]
 let FaithfulCsv() =    
-    runTest "..\..\..\Samples\Faithful\Model.csv"
+    runTest (System.IO.Path.Combine("..","..","..","Samples","Faithful","Model.csv"))
     Assert.True(true)
 
 [<Test>]
-let FaithfulTxt() =    
-    runTest "..\..\..\Samples\Faithful\Model.txt"
+let FaithfulTxt() = 
+    runTest (System.IO.Path.Combine("..","..","..","Samples","Faithful","Model.txt"))  
     Assert.True(true)
 
 [<EntryPoint>]

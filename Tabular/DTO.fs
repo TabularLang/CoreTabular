@@ -448,7 +448,7 @@ module TypedDTO =
                     | o -> o
         let sw,name = 
          if not (System.IO.Directory.Exists(dir)) then System.IO.Directory.CreateDirectory(dir) |> ignore
-         let name = dir + @"\" + filename 
+         let name = System.IO.Path.Combine(dir,filename) 
          if System.IO.File.Exists(name) then System.IO.File.Delete(name) //careful
          let file = new System.IO.StreamWriter(name)
          file, name

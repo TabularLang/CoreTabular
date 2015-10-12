@@ -38,7 +38,7 @@ module TabularCompiler =
  open TypedDTO
  let compileNew (verbose: bool, collectStats:bool, extractCode:string, file:string,name:string,typedCoreSchema:Schema, dbin:DataBase, algo:IAlgorithm option, breakSymmetry, numberOfIterations : int option, randomSeed,cts: CancellationToken option) =
       MicrosoftResearch.Infer.Maths.Rand.Restart(randomSeed)
-      let tmpDir= System.IO.Path.GetTempPath() + @"Tabular"
+      let tmpDir= System.IO.Path.Combine(System.IO.Path.GetTempPath(),"Tabular")
       if not(System.IO.Directory.Exists tmpDir)
       then  System.IO.Directory.CreateDirectory(tmpDir) |> ignore
       let total = new System.Diagnostics.Stopwatch()
