@@ -1,4 +1,5 @@
 ﻿%{
+
 open MicrosoftResearch.Infer.Tabular.Syntax
 
 let inputOf m = Input

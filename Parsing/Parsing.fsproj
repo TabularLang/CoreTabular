@@ -65,25 +65,23 @@
   <Import Project="$(FSharpTargetsPath)" Condition="Exists('$(FSharpTargetsPath)')" />
   <!--<Import Project="..\Dependencies\FsLex\FSharp.PowerPack.targets" />-->
   <PropertyGroup>
-    <FsLexOutputFolder>$(IntermediateOutputPath)</FsLexOutputFolder>
-    <FsYaccOutputFolder>$(IntermediateOutputPath)</FsYaccOutputFolder>
+    <FsLexOutputFolder></FsLexOutputFolder>
+    <FsYaccOutputFolder></FsYaccOutputFolder>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="$(IntermediateOutputPath)Parser.fs">
-      <Visible>false</Visible>
-      <Link>Parser.fs</Link>
-    </Compile>
-    <Compile Include="$(IntermediateOutputPath)Lexer.fs">
-      <Visible>false</Visible>
-      <Link>Lexer.fs</Link>
-    </Compile>
     <Compile Include="AssemblyInfo.fs" />
     <FsYacc Include="Parser.fsy">
       <OtherFlags>--module Parser</OtherFlags>
     </FsYacc>
+    <Compile Include="Parser.fs">
+      <Link>Parser.fs</Link>
+    </Compile>
     <FsLex Include="Lexer.fsl">
       <OtherFlags>--unicode</OtherFlags>
     </FsLex>
+    <Compile Include="Lexer.fs">
+      <Link>Lexer.fs</Link>
+    </Compile>
     <Compile Include="Parsing.fs" />
     <Compile Include="SchemaParser.fs" />
     <None Include="app.config" />

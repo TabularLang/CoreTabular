@@ -48,7 +48,12 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Infer.Compiler">
-      <HintPath>..\..\Dependencies\infernet\2.6\Infer.Compiler.dll</HintPath>
+      <HintPath>..\packages\Microsoft.Research.InferNET.2.6.41114.1\lib\net45\Infer.Compiler.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Infer.Runtime">
+      <HintPath>..\packages\Microsoft.Research.InferNET.2.6.41114.1\lib\net45\Infer.Runtime.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">

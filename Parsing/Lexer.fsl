@@ -1,4 +1,5 @@
 ﻿{
+
 module Lexer
 open System
 open Parser

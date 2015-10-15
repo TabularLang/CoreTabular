@@ -86,6 +86,7 @@
     <PostBuildEvent>
     </PostBuildEvent>
   </PropertyGroup>
+  <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="LatentModel.fs" />
@@ -100,6 +101,7 @@
     <Compile Include="SymmetryBreaking.fs" />
     <Compile Include="TabularCompiler.fs" />
     <Compile Include="CrossValidation.fs" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CSharpHelpers\CSharpHelpers.csproj">
@@ -121,10 +123,12 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Infer.Compiler">
-      <HintPath>..\..\Dependencies\infernet\2.6\Infer.Compiler.dll</HintPath>
+      <HintPath>..\packages\Microsoft.Research.InferNET.2.6.41114.1\lib\net45\Infer.Compiler.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Infer.Runtime">
-      <HintPath>..\..\Dependencies\infernet\2.6\Infer.Runtime.dll</HintPath>
+      <HintPath>..\packages\Microsoft.Research.InferNET.2.6.41114.1\lib\net45\Infer.Runtime.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="System" />
@@ -132,7 +136,6 @@
     <Reference Include="System.Numerics" />
     <Reference Include="System.Xml" />
   </ItemGroup>
-  <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
