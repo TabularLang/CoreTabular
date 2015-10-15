@@ -1,11 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>dbf75f1d-6a77-4007-a33b-498abafa4cd5</ProjectGuid>
+    <ProjectGuid>{DBF75F1D-6A77-4007-A33B-498ABAFA4CD5}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>TabularCSVCLI</RootNamespace>
     <AssemblyName>tc</AssemblyName>
@@ -20,7 +19,6 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <Tailcalls>false</Tailcalls>
     <OutputPath>bin\Debug\</OutputPath>
@@ -42,48 +40,46 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DocumentationFile>bin\Release\TabularCSVCLI.XML</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
+    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Infer.Compiler">
-      <HintPath>..\..\Dependencies\infernet\2.6\Infer.Compiler.dll</HintPath>
-    </Reference>
-    <Reference Include="Infer.Runtime">
-      <HintPath>..\..\Dependencies\infernet\2.6\Infer.Runtime.dll</HintPath>
-    </Reference>
-    <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <Private>True</Private>
-    </Reference>
     <Reference Include="Microsoft.VisualBasic" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
+    <Reference Include="FSharp.Core">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Infer.Compiler">
+      <HintPath>..\packages\Microsoft.Research.InferNET.2.6.41114.1\lib\net45\Infer.Compiler.dll</HintPath>
+    </Reference>
+    <Reference Include="Infer.Runtime">
+      <HintPath>..\packages\Microsoft.Research.InferNET.2.6.41114.1\lib\net45\Infer.Runtime.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CSVTabular.fs" />
     <Compile Include="parserCLI.fs" />
     <Compile Include="Program.fs" />
     <None Include="App.config" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Parsing\Parsing.fsproj">
       <Name>Parsing</Name>
-      <Project>{4d13b34e-2527-4295-a8b3-7770595147e7}</Project>
-      <Private>True</Private>
+      <Project>{4D13B34E-2527-4295-A8B3-7770595147E7}</Project>
     </ProjectReference>
     <ProjectReference Include="..\TabularChecker\TabularChecker.fsproj">
       <Name>TabularChecker</Name>
-      <Project>{0d2aac5f-656f-48d6-8d8e-5401e031a94b}</Project>
-      <Private>True</Private>
+      <Project>{0D2AAC5F-656F-48D6-8D8E-5401E031A94B}</Project>
     </ProjectReference>
     <ProjectReference Include="..\TabularCompiler\TabularCompiler.fsproj">
       <Name>TabularCompiler</Name>
-      <Project>{5f6ce5c9-3657-497d-b128-2076fb8fbd9c}</Project>
-      <Private>True</Private>
+      <Project>{5F6CE5C9-3657-497D-B128-2076FB8FBD9C}</Project>
     </ProjectReference>
     <ProjectReference Include="..\Tabular\Tabular.fsproj">
       <Name>Tabular</Name>
-      <Project>{cdfb169a-3ca6-4e26-b61e-0a910f4bcd5d}</Project>
-      <Private>True</Private>
+      <Project>{CDFB169A-3CA6-4E26-B61E-0A910F4BCD5D}</Project>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
