@@ -9,9 +9,7 @@ See file LICENSE.txt.
 
  1. Infer.NET v2.6
 
- CoreTabular uses Infer.NET as a backend.  Before building
- CoreTabular, the binaries for Infer.NET must be downloaded and
- installed in sibling directory ..\Dependencies\infernet\2.6.
+ CoreTabular uses Infer.NET as a backend. 
 
  2. Visual Studio 2013 (Optional)
 
