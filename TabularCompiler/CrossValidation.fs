@@ -112,6 +112,7 @@ module CrossValidation =
                   TabularCompiler.latentModelStraight( 
                                                (* file *) "CrossValidationTemp",
                                                (* name *) "CrossValidationTemp",
+                                              (* (* schema *) typedCoreSchema, (* should actually be full schema *) *)
                                                (* schema *) typedCoreSchema,
                                                (* verbose *)  false,
                                                (* collectStats *) false,

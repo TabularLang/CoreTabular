@@ -137,6 +137,7 @@ let rec checkExpr (pc:B) (g:Env) (e:Exp) (t:TargetType) : ExprTyped  =
         let (TypedExp(_,v) as ft) = checkExpr (envInsertVar g x (u, pc)) f t
         //TODO: check u is well-formed - if pc is H then it just could mention x!
         TypedExp(Let (x, et, ft), v)
+  
   | Prim(Factor(FactorName f),es) when f.StartsWith("#") -> 
         let ets = List.map (synthExpr pc g) es
         let d = List.fold (fun d (TypedExp(e,t) as et) -> supD et d (det t)) D ets

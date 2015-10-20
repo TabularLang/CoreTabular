@@ -117,6 +117,7 @@ let rec lookupFieldType (record:List<Var * TargetType>) (fIn:Var) : TargetType =
         if (f = fIn) then t else lookupFieldType tail fIn
     | [] -> failwith (sprintf "no such field: %O" (fIn))
 
+
 let rec printEnv (g:Env) =
     match g with
       G_Empty -> printf ";;\n"
@@ -126,3 +127,4 @@ let rec printEnv (g:Env) =
                                 printEnv tail
     | G_Model ((y, t), tail) -> printf "m>%s\n" y
                                 printEnv tail
+

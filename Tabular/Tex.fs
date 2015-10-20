@@ -10,14 +10,14 @@ module Tex =
       | S.TypedExp(e,t) -> isAtomic e
       | _ -> false
          
-  let ident x = x
+  let ident (x:string) = x.Replace("_","\\_")
 
   let detToStr d = 
-      match d with 
+        match d with 
       | Syntax.D -> "det"
       | Syntax.R -> "rnd"
       | Syntax.Qry -> "qry"
-
+   
   let uptoAsMod = ref true
 
   let rec 
@@ -27,10 +27,27 @@ module Tex =
      | S.MIndexed(m,e1,e2) -> 
         sprintf "(%O)\\[%O<%O\\]" (modelToStr m) (exprToStr e1) (exprToStr e2)
      | S.MCall(f,args) -> sprintf "%O(%O)" f (fldsToStr args)
+     | S.MRegn r -> "== "+(RtoString r)
      | S.TypedModel(m,_) -> (modelToStr m) 
- 
   
+  and PredictorToString p = 
+     match p with
+     | S.Scalar f -> sprintf "%A" f
+     | S.Variable (v,_) -> ident v
+     | S.Interaction (p1,p2) -> sprintf "%O:%O" (PredictorToString p1) (PredictorToString p2)
+     | S.Path ([p1],p2) -> sprintf "%O.%O" (PredictorToString p1) (PredictorToString p2)
+     | S.Path (ps,p) -> sprintf "(%O).%O" (String.concat "," (List.map PredictorToString ps)) (PredictorToString p) 
+     
 
+  and RtoString r =
+     match r with
+     | S.Immed e -> sprintf "'%O" (PredictorToString e)
+     | S.Sum (r1,r2) -> sprintf "%O + %O" (RtoString r1) (RtoString r2)
+     | S.Coeff(e,alpha,r) ->  sprintf "%O\\{%O==%O\\}" (PredictorToString e) alpha (RtoString r) 
+     | S.Cond(r,p,_) ->  sprintf "(%O\|%O)" (RtoString r) (PredictorToString p)
+     | S.Noise(d,ps) ->sprintf "%O(%O)" (Pretty.distToStr d) (String.concat "," (List.map PredictorToString ps))
+     | S.Res(v,r) -> sprintf "(new %O)(%O)" v (RtoString r)
+      
   and exprToStr (e:S.Exp) =
    let nestedExprToStr e = 
       if isAtomic e 
@@ -39,7 +56,7 @@ module Tex =
 
    // todo: exploit precedences
    match e with
-   | S.Var v -> v 
+   | S.Var v -> ident v 
    | S.Const (S.IntConst v) -> sprintf "%A" v
    | S.Const (S.BoolConst v) -> sprintf "%A" v
    | S.Const (S.RealConst v) -> sprintf "%A" v
@@ -52,7 +69,7 @@ module Tex =
    | S.Prim(S.Div,[e1;e2]) -> sprintf "%O / %O"  (nestedExprToStr e1) (nestedExprToStr e2)
    | S.Prim(S.Max,[e1;e2]) ->  sprintf "max(%O,%O)"  (nestedExprToStr e1) (nestedExprToStr e2)
    | S.Prim(S.Mod,[e1;e2]) ->   sprintf "mod(%O,%O)"  (nestedExprToStr e1) (nestedExprToStr e2)
-   | S.Prim(S.Or,[e1;e2]) ->  sprintf "%O | %O"  (nestedExprToStr e1) (nestedExprToStr e2)
+   | S.Prim(S.Or,[e1;e2]) ->  sprintf "%O \\| %O"  (nestedExprToStr e1) (nestedExprToStr e2)
    | S.Prim(S.And,[e1;e2]) ->  sprintf "%O \\& %O"  (nestedExprToStr e1) (nestedExprToStr e2)
    | S.Prim(S.Eq,[e1;e2]) -> sprintf "%O = %O"  (nestedExprToStr e1) (nestedExprToStr e2)
    | S.Prim(S.Neq,[e1;e2]) -> sprintf "%O != %O"  (nestedExprToStr e1) (nestedExprToStr e2)
@@ -68,12 +85,12 @@ module Tex =
    | S.DeRef(e1,tn,cn) -> sprintf "(%O :> Link(%O)).%O" (nestedExprToStr (e1)) tn cn
    | S.Ref(tn,cn) ->  sprintf "%O.%O" tn cn 
    | S.If(e1,e2,e3) -> sprintf "if %O then %O else %O" (exprToStr e1) (exprToStr e2) (exprToStr e3)
-   | S.ForLoop(x,e1,e2) -> sprintf "\\[for %O < %O ->  %O\\]" x (nestedExprToStr e1) (exprToStr e2)  
+   | S.ForLoop(x,e1,e2) -> sprintf "\\[for %O < %O ->  %O\\]" (ident x) (nestedExprToStr e1) (exprToStr e2)  
    | S.Array(es) -> sprintf "\\[%O\\]"  (elemsToStr es)
    | S.Subscript(e1,e2) -> sprintf "%O\\[%O\\]" (nestedExprToStr ( e1)) (exprToStr ( e2))
    | S.Constraint(e1,t1) -> sprintf "%O : %O" (nestedExprToStr ( e1)) (columnTypeToStr ( t1))
-   | S.Let(x,e1,e2) -> sprintf "let %O = %O in %O" x (exprToStr ( e1)) (exprToStr ( e2))
-   | S.Scan(s,x,e1,e2,e3) -> sprintf "Scan((%O,%O)->%O,%O,%O)" s x (nestedExprToStr ( e1)) (nestedExprToStr ( e2)) (nestedExprToStr ( e3))
+   | S.Let(x,e1,e2) -> sprintf "let %O = %O in %O" (ident x) (exprToStr ( e1)) (exprToStr ( e2))
+   | S.Scan(s,x,e1,e2,e3) -> sprintf "Scan((%O,%O)->%O,%O,%O)" s (ident x) (nestedExprToStr ( e1)) (nestedExprToStr ( e2)) (nestedExprToStr ( e3))
    | S.Infer(d,es,x,e) -> sprintf "infer.%A\\[%O\\].%O(%O)" d  (expsToStr es) x (exprToStr e) 
    | S.TypedExp(e,ty) -> exprToStr e
    | _ -> sprintf "?%A" e
@@ -106,7 +123,7 @@ module Tex =
       | S.T_String -> "string"
       | S.T_Upto(S.TypedExp(S.SizeOf t,_))
       | S.T_Upto(S.SizeOf t)
-      | S.T_Link t -> sprintf "link(%O)" t
+      | S.T_Link t -> sprintf "link(%O)" (ident t)
       | S.T_Array (ty,e) -> sprintf "%O\\[%O\\]" (columnTypeToStr ty) (exprToStr e)
       | S.T_Upto e -> if !uptoAsMod then sprintf "mod(%O)"  (exprToStr e)
                                     else sprintf "upto(%O)" (exprToStr e)
@@ -129,8 +146,8 @@ module Tex =
   let TypeToStr ty =
       let d = detToStr (det ty)
       let ty = columnTypeToStr ty
-      sprintf "%O!%O" ty d
-
+      //sprintf "%O!%O" ty d
+      ty
 
 
   let markupToStr (A:S.Markup) : string =
@@ -141,12 +158,15 @@ module Tex =
      | S.Latent(M) -> (modelToStr M)
      | S.Observable(M) -> (modelToStr M)
 
+     
+     
+ 
   let tableToStr (T:S.Table) : string = 
-     (List.map (fun(nme,col:S.Column) -> markupToFmt col.Markup nme (TypeToStr col.Type) (markupToStr col.Markup)) T)
+     (List.map (fun(nme,col:S.Column) -> markupToFmt col.Markup (ident nme) (TypeToStr col.Type) (markupToStr col.Markup)) T)
     |> String.concat "\n  "
   let declToStr ((S.Declaration (decl, T)):S.Declaration): string  =
     match decl with
-    | S.Table(nme,_) -> sprintf "\\TABLE{%s}\\\\\n%s" nme (tableToStr T)
-    | S.Fun(nme) -> sprintf "\\FUN{%s}\\\\\n%s"  nme (tableToStr T)
+    | S.Table(nme,_) -> sprintf "\\TABLE{%s}\\\\\n%s\\\\" (ident nme) (tableToStr T)
+    | S.Fun(nme) -> sprintf "\\FUN{%s}\\\\\n%s\\\\"  (ident nme) (tableToStr T)
 
   let schemaToStr (S:S.Schema) = String.concat "\n " ("\\begin{Tabular}"::(List.map declToStr S)@["\\end{Tabular}"])

@@ -91,7 +91,21 @@ M :=
   | M[E]                 (* indexed model with implicit bound *)
   | M[E < e]             (* indexed model with explicit bound *)
   | f(c1=E1,...,cn=En)   (* function call *)
-  
+  | ~ r                   (* regression *)
+ 
+Regressions
+r :=
+  | ? 	                 (* noise *)
+  | ?{pi}                (* named noise *)
+  | ?{pi=E}              (* named noise with precision E *)
+  | r1 + r2
+  | E                    (* term with implicit coefficent with default prior *)
+  | E{alpha}             (* term with explicit coefficent name alpha with default prior *)
+  | E{alpha~r}           (* term with explicit coefficent named alpha nested regression *)
+  | 'E                   (* coefficent-less term *)
+  | (r | c)              (* regression grouped by (discrete) variable c *)
+ 
+
 Columns:
 col := c T  input        (* concrete input or 
                             mandatory function parameter *)

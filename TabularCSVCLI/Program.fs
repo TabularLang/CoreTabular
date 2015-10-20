@@ -66,7 +66,7 @@ module CLI =
         let (typedCoreSchema,le, odb)  as res =
             TabularCompiler.compileNew(verbose,true,(if descSaveCSharpCode then System.IO.Path.Combine(outputDir,modelshortname + ".cs") else null), 
                                         modelFileName,modelshortname,
-                                        typedCoreSchema, dbin, oAlgo, breakSym, 
+                                        (* schema,*)typedCoreSchema, dbin, oAlgo, breakSym, 
                                         Some iterations, TabularCompiler.defaultRandomSeed, None)
         // phase 5 - save the results
         if saveTypedModels then
@@ -108,7 +108,7 @@ module CLI =
             {CLIArg.Command=breakSym            ; Description= descbreakSym             ; Required=false ;NumberOfParameter = Fixed 0 } 
             {CLIArg.Command=separator           ; Description= descSeparator            ; Required=false ;NumberOfParameter = Fixed 1 } 
             {CLIArg.Command=saveTypedModels     ; Description= descSaveTypeModel        ; Required=false ;NumberOfParameter = Fixed 0 } 
-            {CLIArg.Command=saveCsharpCode      ; Description= descSaveCSharpCode       ; Required=false ;NumberOfParameter = Fixed 0 }
+            {CLIArg.Command=saveCsharpCode      ; Description= descSaveCSharpCode       ; Required=false ;NumberOfParameter = Fixed 0 } 
             {CLIArg.Command=help    ; Description= descHelp                             ; Required=false ;NumberOfParameter = Fixed 0 } 
             ]
         try
@@ -147,7 +147,7 @@ module CLI =
             let saveCSharpCode      = TryGetValue parsedArgs saveCsharpCode |> Option.isSome
 
             let oAlgo               = TryGetValue parsedArgs algo               |> Option.map (fun v -> tryFindAlgo v.Head)
-            
+
 
             let writer left right = writeStd verbose realConsole (sprintf "%s:  %A" (pad 20 left) right)
             writer "modelFileName      "  modelFileName      
@@ -155,9 +155,9 @@ module CLI =
             writer "outputDirectoryName"  outputDirectoryName
             writer "verbose            "  verbose            
             writer "breakSym           "  breakSym            
-            writer "separator          "  oSeparator  
+            writer "separator          "  oSeparator            
             writer "saveTypedModels    "  saveTypedModels            
-            
+
             try 
                 runCLI (System.IO.Directory.GetCurrentDirectory()) oSeparator modelFileName dataDirectoryName sample oIterations oAlgo (Reuse outputDirectoryName) verbose saveCSharpCode breakSym saveTypedModels 
             with | e -> 

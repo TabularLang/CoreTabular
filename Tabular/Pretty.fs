@@ -32,8 +32,26 @@ module Pretty =
      | S.MIndexed(m,e1,e2) -> 
         sprintf "%O[%O<%O]" (modelToStr m) (exprToStr e1) (exprToStr e2)
      | S.MCall(f,args) -> sprintf "%O(%O)" f (fldsToStr args)
+     | S.MRegn r -> "~ "+(RtoString r)
      | S.TypedModel(m,_) -> (modelToStr m) 
- 
+
+  and PredictorToString p = 
+     match p with
+     | S.Scalar f -> sprintf "%A" f
+     | S.Variable (v,_) -> ident v
+     | S.Interaction (p1,p2) -> sprintf "%O:%O" (PredictorToString p1) (PredictorToString p2)
+     | S.Path ([p1],p2) -> sprintf "%O.%O" (PredictorToString p1) (PredictorToString p2)
+     | S.Path (ps,p) -> sprintf "(%O).%O" (String.concat "," (List.map PredictorToString ps)) (PredictorToString p) 
+     
+  and RtoString r =
+     match r with
+     | S.Immed p -> sprintf "'%O" (PredictorToString p)
+     | S.Sum (r1,r2) -> sprintf "%O + %O" (RtoString r1) (RtoString r2)
+     | S.Coeff(p,alpha,r) ->  sprintf "%O{%O~%O}" (PredictorToString p) alpha (RtoString r) 
+     | S.Cond(r,p,_) ->  sprintf "(%O|%O)" (RtoString r) (PredictorToString p)
+     | S.Noise(d,ps) ->sprintf "%O(%O)" (distToStr d) (String.concat "," (List.map PredictorToString ps))
+     | S.Res(v,r) -> sprintf "(new %O)(%O)" v (RtoString r)
+      
   and distToStr d =
       match d with
       |  S.GaussianFromMeanAndVariance -> "Gaussian"

@@ -4,9 +4,14 @@ open Syntax
 open Types
 open Checker
 
-//returns annotated model
+
 let rec checkModel (pc:B) (g:Env) (m:Model) (y:TargetType) : ModelTyped =
     match m with
+    |  MRegn r ->
+       let (rt,Q) = Regression.check g r y
+       
+       (TypedModel (MRegn rt,
+                    ((T_Record Q,T_Record ERT), y)))
     |  MEmpty -> 
         failwith "only inputs may have empty models"
     |  MExp (e) ->

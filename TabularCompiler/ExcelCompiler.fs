@@ -36,7 +36,7 @@ module TabularCompiler =
 
 
  open TypedDTO
- let compileNew (verbose: bool, collectStats:bool, extractCode:string, file:string,name:string,typedCoreSchema:Schema, dbin:DataBase, algo:IAlgorithm option, breakSymmetry, numberOfIterations : int option, randomSeed,cts: CancellationToken option) =
+ let compileNew (verbose: bool, collectStats:bool, extractCode:string, file:string,name:string,schema: Schema, typedCoreSchema:Schema, dbin:DataBase, algo:IAlgorithm option, breakSymmetry, numberOfIterations : int option, randomSeed,cts: CancellationToken option) =
       MicrosoftResearch.Infer.Maths.Rand.Restart(randomSeed)
       let total = new System.Diagnostics.Stopwatch()
       do total.Start()
@@ -63,7 +63,7 @@ module TabularCompiler =
       ie.Compiler.GeneratedSourceFolder <- System.IO.Path.GetTempPath() + @"Tabular\GeneratedSource"
       lazyWriteLine <| lazy (sprintf "Generated Source Folder: %s" (ie.Compiler.GeneratedSourceFolder))
       ie.NumberOfIterations <- defaultArg numberOfIterations 10
-      let infer (dbin: DataBase)  = 
+      let infer (dbin: DataBase)  =
         match algo with
         | None ->   let dbout = QueryCompiler.Sample dbin  typedCoreSchema 
                     let typedCoreSchema  = filterQueries [] typedCoreSchema 
@@ -120,7 +120,9 @@ module TabularCompiler =
                  let sizeMap = Map.map (fun tn (n,_) -> n) TE
                  SymmetryBreaking.breakSymmetries sizeMap (RE,VE,AE) typedCoreSchema
         ie.OptimiseForVariables <- List.toArray(vsToInfer)
-        //ie.Compiler.GivePriorityTo(typeof<MicrosoftResearch.Infer.Factors.GaussianProductOp_SHG09>);
+        if name.Contains("!") then 
+           System.Console.WriteLine "GivePriorityTo(typeof<MicrosoftResearch.Infer.Factors.GaussianProductOp_SHG09>"
+           ie.Compiler.GivePriorityTo(typeof<MicrosoftResearch.Infer.Factors.GaussianProductOp_SHG09>);
         do sw.Reset();
         do sw.Start();
         try
@@ -204,7 +206,7 @@ module TabularCompiler =
            
            let code = lazy (try Extraction.toCompileUnit dbout "Tabular" name typedCoreSchema s with e -> sprintf "/*C# code generation failed %s */" (e.ToString()))
            lazyWriteLine <| code
-          
+           
            if (extractCode <> null) then 
                System.IO.File.WriteAllText(extractCode,code.Force())
 
@@ -247,7 +249,7 @@ module TabularCompiler =
  open System.Threading
 
 
- let latentModelStraight(file, name, schema, verbose, collectStats, codefile, dbin : DataBase, algo, breakSymmetry, numberOfIterations, randomSeed, ctsLongToken) = 
+ let latentModelStraight(file, name,schema,coreSchema, verbose, collectStats, codefile, dbin : DataBase, algo, breakSymmetry, numberOfIterations, randomSeed, ctsLongToken) = 
       let (schema, le, db) = 
          async {
             let ctx = SynchronizationContext.Current
@@ -256,7 +258,7 @@ module TabularCompiler =
                         let tcs = new Tasks.TaskCompletionSource<Schema * float* DataBase>()
                         let f (state:obj) = 
                                  try 
-                                    let res = compileNew(verbose,collectStats, codefile, file,name,schema, dbin, algo, breakSymmetry, Some numberOfIterations, randomSeed, Some ctsLongToken)
+                                    let res = compileNew(verbose,collectStats, codefile, file, name, schema, coreSchema, dbin, algo, breakSymmetry, Some numberOfIterations, randomSeed, Some ctsLongToken)
                                     tcs.SetResult(res)
                                  with e -> tcs.SetException(e)
                         let stackSizeInByes = if System.Environment.Is64BitProcess 

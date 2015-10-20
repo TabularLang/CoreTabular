@@ -1,6 +1,8 @@
 ﻿%{
 
 open MicrosoftResearch.Infer.Tabular.Syntax
+open MicrosoftResearch.Infer.Tabular
+open MicrosoftResearch.Infer.Tabular.Syntax.Regressions.Abbreviations
 
 let inputOf m = Input
 let paramOf m = Param m
@@ -9,6 +11,7 @@ let outputOf m = Observable m
 let hyperOf m = match m with MExp e -> Hyper e | _ -> (Static,In,m)
 let markupOf (l,v) m = (l,v,m) : Markup
 type MarkupOf = Model -> Markup
+
 %}
 // These are the terminal tokens of the grammar along with the types of
 // the data carried by each token:
@@ -22,6 +25,7 @@ type MarkupOf = Model -> Markup
 %token INDEXED CALL
 %token VAR CONST
 %token IF INFER THEN ELSE FOR DOYIELD LET IN DOT COLON 
+%token TILDE
 %token NEGATE  NOT     PLUS    MINUS   MULT    DIV     MAX     MOD     OR      AND     EQ      NEQ     LT      GT      LTEQ    GTEQ    
 %token BETA BETAFROMMEANANDVARIANCE GAUSSIANFROMMEANANDPRECISION GAUSSIANFROMMEANANDVARIANCE GAMMAFROMSHAPEANDSCALE GAMMAFROMMEANANDVARIANCE GAMMAFROMSHAPEANDRATE BINOMIAL 
 %token VECTORGAUSSIANFROMMEANANDVARIANCE VECTORGAUSSIANFROMMEANANDPRECISION DISCRETE DISCRETEUNIFORM POISSON BERNOULLI DIRICHLET DIRICHLETUNIFORM DIRICHLETSYMMETRIC WISHARTFROMSHAPEANDRATE WISHARTFROMSHAPEANDSCALE
@@ -30,8 +34,9 @@ type MarkupOf = Model -> Markup
 %token SIZEOF
 %token FUNCTION
 %token SETTINGS
- 
-%token LPAR RPAR LSQBRACKET RSQBRACKET COMMA AMPERSAND EOF 
+%token TICK QUERY NEW
+
+%token LPAR RPAR LSQBRACKET RSQBRACKET LCURL RCURL COMMA AMPERSAND EOF 
 %token TRUE FALSE
 
 %token T_LINK T_REAL T_BOOL T_INT T_UPTO T_STRING T_ARRAY T_RECORD T_VECTOR T_POSITIVEDEFINITEMATRIX
@@ -46,7 +51,7 @@ type MarkupOf = Model -> Markup
 
 // The start token becomes a parser function in the compiled code:
 %start Model
-%type < MicrosoftResearch.Infer.Tabular.Syntax.Model > Model
+%type < Model > Model
 
 %start Space
 %type <D> Space
@@ -71,7 +76,7 @@ type MarkupOf = Model -> Markup
 %start Markup
 %type < Markup > Markup
 %start TableId
-%type < MicrosoftResearch.Infer.Tabular.Syntax.TableId > TableId
+%type < TableId > TableId
 %start SimpleString
 %type < System.String > SimpleString
 %start ColumnName
@@ -80,6 +85,11 @@ type MarkupOf = Model -> Markup
 %type < Microsoft.FSharp.Core.Unit > SettingsTableId
 %start EmptyCell
 %type < unit > EmptyCell
+
+//Fabular
+%type <Predictor> Predictor
+%type <Predictor list> PredictorList
+%type <Regression> Regression
 %%
 
 // These are the rules of the grammar along with the F# code of the 
@@ -117,13 +127,17 @@ Model:
 //                                                 $2                }
 //  | Exp    LSQBRACKET Exp1 LT Exp0 RSQBRACKET { MIndexed(MExp    ($1),$3,$5)      } 
     | Model LSQBRACKET Exp1 LT Exp0 RSQBRACKET  { MIndexed($1,$3,$5)  }       
-	| Model LSQBRACKET Exp1 RSQBRACKET  { MIndexed($1,$3,Const (IntConst -1))  }   
-	|                              { MEmpty}           
+	| Model LSQBRACKET Exp1 RSQBRACKET  { MIndexed($1,$3,Const (IntConst -1))  }
+// Fabular
+    | TILDE  Regression {MRegn($2)}    
+// Empty        
+	|                              { MEmpty}     
+	
 
 Bindings :
     | IDENT EQ Exp                 { ($1,$3)::[]     }
     | IDENT EQ Exp COMMA Bindings  { ($1,$3)::$5     }
-	
+
 
 Exp :
     | Exp2                     {  $1                }
@@ -225,7 +239,7 @@ MarkupOf :
 Markup : 
     | MarkupOf LPAR Model RPAR                       {  $1($3) }
 
-
+	
 
 
 ExpList :
@@ -268,4 +282,36 @@ DistOp :
     | DIRICHLETUNIFORM                                      {  DirichletUniform                     }
     | DIRICHLETSYMMETRIC                                    {  DirichletSymmetric                   }
     | WISHARTFROMSHAPEANDSCALE                              {  WishartFromShapeAndScale             }
+
+
+Predictor:
+    | IDENT      {Variable($1,None)}
+	| FLOAT      {Scalar($1) }
+	| INT		 {Scalar((float) $1)}	// implicit coercion 
+	| Predictor COLON Predictor {Interaction($1,$3)}
+	| Predictor DOT Predictor {Path([$1],$3)}
+    | LPAR PredictorList RPAR DOT Predictor {Path($2,$5)}
+
+PredictorList :
+    | Predictor                      {   [$1]    }
+    | Predictor COMMA PredictorList  {  ($1)::$3    }
+    |                                {   []    }
+
+
+Regression:
+    | TICK Predictor      { Immed($2) }
+	| Regression PLUS Regression		 { Sum($1,$3) }
+	| QUERY LCURL IDENT TILDE Regression RCURL  { queryWithPrior $3 $5}
+	| QUERY LCURL IDENT RCURL { queryWithName $3}
+	| QUERY { query() }
+	| LPAR Regression RPAR   { $2} 
+	| LPAR Regression OR Predictor RPAR  { Cond($2,$4,Syntax.T_Int)} // T_Int is a dummy placeholder
+	| Predictor LCURL IDENT TILDE Regression RCURL { Coeff($1,$3,$5)}
+	| Predictor LCURL IDENT RCURL { Coeff($1,$3,defaultPrior)}
+	| Predictor { Coeff($1,null,defaultPrior)}
+	| DistOp LPAR PredictorList RPAR {Noise($1,$3)}
+	| NEW IDENT DOT Regression {Res($2,$4)} 
+
+
+
 
