@@ -38,6 +38,7 @@ rule tokenize = parse
 | "!"		   	{ NOT }
 | "max"			{ MAX }
 | "mod"			{ MOD }
+| "new"         { NEW }
 | "|"			{ OR }
 | "&"			{ AND }
 
@@ -47,6 +48,7 @@ rule tokenize = parse
 | "<"           { LT   }
 | ">"           { GT   }
 | "="           { EQ   }
+| "'"           { TICK   }
 
 | "Beta"                                            {  BETA                                         }      
 | "BetaFromMeanAndVariance"                         {  BETAFROMMEANANDVARIANCE                      } // short for
@@ -96,9 +98,13 @@ rule tokenize = parse
 | ")"			{ RPAR }
 | "["           { LSQBRACKET }
 | "]"           { RSQBRACKET }
+| "{"           { LCURL   }
+| "}"           { RCURL   }
 | ","           { COMMA }
 | ":"           { COLON }
 | "@"           { AMPERSAND }
+| "~"           { TILDE }
+| "?"           { QUERY }
 
 // Keywords 
 | "if"          { IF }

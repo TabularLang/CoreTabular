@@ -10,9 +10,28 @@ module Erase =
      | MIndexed(m,e1,e2) -> 
        MIndexed(model m,expr e1,expr e2)
      | MCall(f,args) -> MCall(f,flds args)
+     | MRegn r -> MRegn (regr r)
      | TypedModel(m,_) -> model m
  
+  and predictor p =
+   match p with
+   | Scalar _ -> p
+   | Variable _  -> p
+   | Interaction (p1,p2) -> Interaction(predictor p1, predictor p2)
+   | Path(ps,p) -> Path (List.map predictor ps, predictor p)
+   | TypedPredictor (p,t) -> predictor p
+   
+  and regr r = 
+   match r with
+   | Immed p -> Immed (predictor p)
+   | Sum (r1,r2)  -> Sum (regr r1, regr r2)
+   | Coeff (p,alpha,r) -> Coeff (predictor p, alpha, regr r)
+   | Cond (r,p,t) -> Cond (regr r,predictor p,ty t)
+   | Noise (d,ps) -> Noise(d,List.map predictor ps)
+   | Res(v,r) -> Res(v,regr r)
+
   
+             
   and expr (e:Exp):Exp =
    match e with
    | Var _  -> e

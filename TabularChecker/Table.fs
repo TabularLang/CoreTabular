@@ -12,10 +12,13 @@ type Log = Map<ColumnName,LogValue>
 
 let levelOf level = match level with Instance -> Y | Static -> W
 
+
 let rec synthTable isTable (g:Env) (tb:Table) : Log * Error * (Table * TableType) =
+    let qualify m c w = match m with MRegn n -> w | _ -> qualify c w 
     match tb with
       [] -> (Map.empty, false, ([], (ERT, ERT, ERT, ERT, ERT)))
     | hd :: tl -> 
+        let hd = Regressions.Sugar.desugar hd // desugar any regression
         let (c, col) = hd
         let tc = isWellFormed g col.Type 
         let markup : Markup = col.Markup
@@ -62,7 +65,7 @@ let rec synthTable isTable (g:Env) (tb:Table) : Log * Error * (Table * TableType
             let ((T_Record ws,T_Record zs) as wc,tci) = t 
              //use sup of inferred, not declared, type with det tc
             let (Some tc) = Syntax.supT tci (det tc)
-            let g1 = List.fold (fun g (wi,twi) -> envInsertVar g (qualify c wi) (twi,levelOf level)) g (ws@zs)
+            let g1 = List.fold (fun g (wi,twi) -> envInsertVar g (qualify m c wi) (twi,levelOf level)) g (ws@zs)
             let g2 = envInsertVar g1 c (tc, W)
             let (log',err',tb1') = synthTable isTable g2 tb1
             let log = log'.Add(c,logValue)
@@ -74,7 +77,7 @@ let rec synthTable isTable (g:Env) (tb:Table) : Log * Error * (Table * TableType
             | Local  ->
               (log,err||err',(tb',(h, w, x, y, z)))
             | Output _ ->
-              let w1 = (List.map (fun (wi,twi) ->  (qualify c wi,twi)) ws) @ (c, tc) :: w
+              let w1 = (List.map (fun (wi,twi) ->  (qualify m c wi,twi)) ws) @ (c, tc) :: w
               (log,err||err',(tb',(h, w1, x, y, z)))
             | In ->
               failwith "impossible"
@@ -102,8 +105,8 @@ let rec synthTable isTable (g:Env) (tb:Table) : Log * Error * (Table * TableType
             let (TypedModel(_, t)) = m'
             let ((T_Record ws as wc,T_Record zs as zc),tci) = t 
             let (Some tc) = Syntax.supT tci (det tc) //use sup of inferred, not declared, type with det tc
-            let g0 = List.fold (fun g (wi,twi) -> envInsertVar g (qualify c wi) (twi,W)) g ws
-            let g1 = List.fold (fun g (wi,twi) -> envInsertVar g (qualify c wi) (twi,levelOf level)) g0 zs
+            let g0 = List.fold (fun g (wi,twi) -> envInsertVar g (qualify m c wi) (twi,W)) g ws
+            let g1 = List.fold (fun g (wi,twi) -> envInsertVar g (qualify m c wi) (twi,levelOf level)) g0 zs
             let g2 = envInsertVar g1 c (tc, levelOf level)
             let (log',err',tb1') = synthTable isTable g2 tb1
             let log = log'.Add(c,logValue)
@@ -117,8 +120,8 @@ let rec synthTable isTable (g:Env) (tb:Table) : Log * Error * (Table * TableType
             | Local ->
                     (log,err'',(tb',(h,w,x,y,z)))
             | Output _ ->
-              let w1 = (List.map (fun (wi,twi) ->  (qualify c wi,twi)) ws) @ (c, tc) :: w
-              let qzs = (List.map (fun (wi,twi) ->  (qualify c wi,twi)) zs)
+              let w1 = (List.map (fun (wi,twi) ->  (qualify m c wi,twi)) ws) @ (c, tc) :: w
+              let qzs = (List.map (fun (wi,twi) ->  (qualify m c wi,twi)) zs)
               match markup with
               | Latent _ ->
                 let z1 = qzs @ (c, tc) :: z

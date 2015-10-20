@@ -29,8 +29,8 @@ let elaborate(fullSchema:Schema) =
            // reduce 
            // System.Console.WriteLine(Pretty.schemaToStr fullSchema)
            let coreSchema = coreS fullSchema
-           //System.Console.WriteLine("-----------")
-           //System.Console.WriteLine(Pretty.schemaToStr coreSchema)
+           System.Console.WriteLine("-----------")
+           System.Console.WriteLine(Pretty.schemaToStr coreSchema)
            // retypecheck
            Schema.synthSchema Types.G_Empty coreSchema
            

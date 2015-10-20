@@ -28,6 +28,10 @@ let prelude : Schema =
                        "Mean",    {Type=makeDet T_Real R;  Markup=Param(MExp(Dist(GaussianFromMeanAndPrecision,[Var "MeanMean"; Var "MeanPrec"])))};
                        "Prec",    {Type=makeDet T_Real R;  Markup=Param(MExp(Dist(GammaFromShapeAndScale,[Var "Shape"; Var "Scale"])))};
                        "ret", {Type=makeDet T_Real R;  Markup=Observable(MExp(Dist(GaussianFromMeanAndPrecision,[Var "Mean"; Var "Prec"])))} ]);
+      Declaration(Fun "Error",
+          ["Scale",   {Type=T_Real;  Markup= Hyper(Const (RealConst 10000.0))};
+                       "Noise",    {Type=makeDet T_Real R;  Markup=Param(MExp(Dist(GammaFromShapeAndScale,[Const(RealConst 1.0); Var "Scale"])))};
+                       "ret", {Type=makeDet T_Real R;  Markup=Observable(MExp(Dist(GaussianFromMeanAndPrecision,[Const(RealConst 0.0); Var "Noise"])))} ]);
        
     ]
 
