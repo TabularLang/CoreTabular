@@ -42,8 +42,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TrueSkill", "TrueSkill", "{
 		Samples\TrueSkill\TrueSkill.csv = Samples\TrueSkill\TrueSkill.csv
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{547741AA-B9BF-43A2-BCDF-37E9C8586E7F}"
-EndProject
 Global
 	GlobalSection(TeamFoundationVersionControl) = preSolution
 		SccNumberOfProjects = 8
