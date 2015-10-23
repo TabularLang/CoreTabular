@@ -23,7 +23,7 @@ In Visual Studio 2013:
 Or just type msbuild from the command-line.
 
 ##Documentation:
-
+ 
 tc.exe gives command line options.
 tc.exe --help gives a summary of tabular syntax.
 
@@ -37,6 +37,22 @@ Samples\Faithful.  Each contains a script run.bat that invokes the
 Tabular compiler tc.exe to compile the model (from Tabular to
 Infer.NET) and run inference.
   
+##Building on Linux (recent Ubuntu with Mono and optional MonoDevelop)
+
+Goes something like this:
+
+cd CoreTabular 
+#get MS VB dll
+sudo apt-get install libmono-microsoft-visualbasic10.0-cil 
+sudo apt-get install nuget
+nuget restore
+chmod a+x packages/FsLexYacc.6.1.0/build/fslex.exe 
+chmod a+x packages/FsLexYacc.6.1.0/build/fsyacc.exe 
+
+From the command-line
+xbuild /t:build /p:Configuration=Debug /p:Platform="Any CPU" 
+
+Or use the MonoDevelop IDE.
 
 
 
