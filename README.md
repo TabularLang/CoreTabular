@@ -37,9 +37,9 @@ Samples\Faithful.  Each contains a script run.bat that invokes the
 Tabular compiler tc.exe to compile the model (from Tabular to
 Infer.NET) and run inference.
   
-##Building on Linux (recent Ubuntu with Mono and optional MonoDevelop)
+##Building on Unix-like systems
 
-Goes something like this:
+Building under recent Ubuntu with Mono and optional MonoDevelop, goes something like this:
 
 ```
 cd CoreTabular 
