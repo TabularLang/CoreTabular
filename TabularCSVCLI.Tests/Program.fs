@@ -26,5 +26,6 @@ let FaithfulTxt() =
 
 [<EntryPoint>]
 let main argv = 
+    FaithfulTxt()
     printfn "%A" argv
     0 // return an integer exit code
