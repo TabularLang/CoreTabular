@@ -524,16 +524,19 @@ module DistributionPrinter =
      open System.Collections
      open Syntax
      open TypedDTO
+
+     let cleanOuterQuote (s:string) = if s.Length > 1 then (if (s.StartsWith("\"") && s.EndsWith("\"")) then (s.Substring(1)).Remove(s.Length-2) else s) else s
      //type DataSource<'Src> = TableName * ID -> int * ColumnType * (ColumnName -> 'Src) (* * Map<IComparable, int>> *)
      let read dir : DataSource<string> = fun (tn (*,id*)) ->
          use tfp = new TextFieldParser(System.IO.Path.Combine([|dir;tn+".csv"|]))
          tfp.TextFieldType <- FieldType.Delimited
+
          tfp.Delimiters <- [| "," |]
          let headers = tfp.ReadFields()
          //let idx = Array.find (fun cn -> cn = id) headers
          let acc = new System.Collections.Generic.List<string[]>()
          while (not tfp.EndOfData) do
-            acc.Add(tfp.ReadFields())
+            acc.Add(Array.map cleanOuterQuote (tfp.ReadFields()))
          tfp.Close()
          let size = acc.Count
          let get cn = 
