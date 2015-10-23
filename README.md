@@ -41,6 +41,7 @@ Infer.NET) and run inference.
 
 Goes something like this:
 
+```
 cd CoreTabular 
 #get MS VB dll
 sudo apt-get install libmono-microsoft-visualbasic10.0-cil 
@@ -48,10 +49,12 @@ sudo apt-get install nuget
 nuget restore
 chmod a+x packages/FsLexYacc.6.1.0/build/fslex.exe 
 chmod a+x packages/FsLexYacc.6.1.0/build/fsyacc.exe 
-
+```
 From the command-line
-xbuild /t:build /p:Configuration=Debug /p:Platform="Any CPU" 
 
+```
+xbuild /t:build /p:Configuration=Debug /p:Platform="Any CPU" 
+```
 Or use the MonoDevelop IDE.
 
 
