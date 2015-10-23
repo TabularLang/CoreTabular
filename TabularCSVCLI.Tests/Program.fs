@@ -2,26 +2,26 @@
 open NUnit.Framework
 open MicrosoftResearch.Infer.Tabular.CLI
 
-let runTest modelFileName =
+let runTest modelFileName breakSym =
         let modelFileName = System.IO.Path.GetFullPath(modelFileName)
         let exeDir = System.IO.Path.GetDirectoryName(modelFileName)
         System.Environment.CurrentDirectory <- exeDir
-        runCLI "." None modelFileName "." false None None (Reuse "verified") true true true true
+        runCLI "." None modelFileName "." false None None (Reuse "verified") true true breakSym true
 
 [<Test>]
 let TrueSkill() =    
-    runTest (System.IO.Path.Combine("..","..","..","Samples","TrueSkill","TrueSkill.csv"))
+    runTest (System.IO.Path.Combine("..","..","..","Samples","TrueSkill","TrueSkill.csv")) false
     Assert.True(true)
 
 
 [<Test>]
 let FaithfulCsv() =    
-    runTest (System.IO.Path.Combine("..","..","..","Samples","Faithful","Model.csv"))
+    runTest (System.IO.Path.Combine("..","..","..","Samples","Faithful","Model.csv")) true
     Assert.True(true)
 
 [<Test>]
 let FaithfulTxt() = 
-    runTest (System.IO.Path.Combine("..","..","..","Samples","Faithful","Model.txt"))  
+    runTest (System.IO.Path.Combine("..","..","..","Samples","Faithful","Model.txt"))  true
     Assert.True(true)
 
 [<EntryPoint>]
