@@ -128,6 +128,8 @@ module QueryCompiler =
          abstract member Condition: 'E * 'E * 'E * System.Type -> 'E
          abstract member Assign : 'E * 'E -> 'S
          abstract member Parameter: Dir * System.Type * string -> 'P * 'E 
+         abstract member Ref: System.Type * (obj option) -> obj 
+         abstract member DeRef : obj -> obj 
          abstract member Block: 'D[] * 'S[] -> 'S
          abstract member ArrayIndex : 'E * 'E -> 'E
          abstract member NewArrayBounds: System.Type * 'E -> 'E
@@ -158,11 +160,28 @@ module QueryCompiler =
          override this. Variable(t:System.Type,v) = let p = L.Variable(t,v) in (p,p:>L)  
          override this. Condition(b,e1,e2,t) = L.Condition(b,e1,e2,t)  :> L
          override this. Assign(e1,e2) = L.Assign(e1,e2) :> L
+         (* work on CLR, but not MONO, which discards assignments to delegate out,inout parameters
          override this. Parameter(dir,t:System.Type,n) = let t = match dir with 
                                                                  | In -> t 
                                                                  | Out| InOut -> t.MakeByRefType() 
                                                          let p =  L.Parameter(t,n) 
                                                          in (p,p:>L)
+         *)
+         override this.Parameter(dir,t:System.Type,n) = 
+                        match dir with 
+                        | In -> let p =  L.Parameter(t,n) 
+                                in (p,p:>L)
+                        | Out 
+                        | InOut  -> 
+                                let p =  L.Parameter(t.MakeArrayType(),n) 
+                                in (p,this.ArrayAccess(p,this.Constant(0)))
+         override this.Ref(t,oin) = // for mono we need to box out parameters into an initialized singleton array
+                        let a =  System.Array.CreateInstance(t,1)
+                        match oin with 
+                        | None -> ()
+                        | Some o -> a.SetValue(o,0)
+                        a :> obj  
+         override this.DeRef(o) =   (o:?>System.Array).GetValue(0) // for mono  we need to read out parameters from a singleton array                          
          override this. Block(decs,exps) = L.Block(decs,exps) :> L
          override this. ArrayIndex(e1,e2) =  L.ArrayIndex(e1,e2) :> L
          override this. NewArrayBounds(t:System.Type, e) = L.NewArrayBounds(t,e) :> L
@@ -283,7 +302,12 @@ module QueryCompiler =
                                        | In -> FieldDirection.In
                                        | Out -> FieldDirection.Out 
                                        | InOut -> FieldDirection.Ref          
-                        (p,CodeVariableReferenceExpression(n):>CodeExpression) // TODO set direction
+                        (p,CodeVariableReferenceExpression(n):>CodeExpression)
+         override this.Ref(t,oin) =  
+                       match oin with 
+                       | Some o -> o
+                       | None -> System.Array.CreateInstance(t,1).GetValue(0) // returns a box default value of type T
+         override this.DeRef(o) = o  
          override this. Block(decs,exps:CodeStatement[]) = CodeConditionStatement(CodePrimitiveExpression(box true) :> CodeExpression, // no real blocks in CodeDOm
                                                                                   Array.append (decs:>obj:?>(CodeStatement[])) exps,
                                                                                   ([||]:CodeStatement[])) :> CodeStatement // 
@@ -791,8 +815,8 @@ module QueryCompiler =
                       let rep = TypedDTO.rep (id2Rep, id2KeyToPos) T //TBR
                       let mkStatic (v:obj) : Static  =
                            rep.Open {new RepOpen<Static> with member this.Case<'T>(r:Rep<'T>) = (TypedDTO.Static<'T> (v:?>'T)):> TypedDTO.Static }
-                      let LCE' = ( (cn, fun v -> mkStatic(v) :> ColValue))::LCE 
-                      trColumns (pv::pars)  (av::decs) ((exp : 'S)::exps) ((null:>obj)::args)  (CE',LCE') rest
+                      let LCE' = ( (cn, fun (v:obj) -> mkStatic (X.DeRef v) :> ColValue))::LCE 
+                      trColumns (pv::pars)  (av::decs) ((exp : 'S)::exps) ((X.Ref(typeOf T,None))::args)  (CE',LCE') rest
 
                     | Input ->
                       let inputValue = colmap.[cn] :?> TypedDTO.Instance
@@ -816,7 +840,7 @@ module QueryCompiler =
                       trColumns (pv::pars) (av::decs) (exp::exps) (vs:>obj::args)  (CE',LCE') rest
 
                     | Observable m 
-                    | Latent m when Types.det T <> R || mode = MSampler -> 
+                    | Latent m when Types.det T <> R || mode = MSampler  -> 
                       let Ts = (typeOf T).MakeArrayType()
                       let (pv,pr) =  X.Parameter(Out,Ts,output(tn,cn))
                       let (av,ar) = X.Variable(Ts,temp(tn,cn))
@@ -836,8 +860,10 @@ module QueryCompiler =
                       let rep = TypedDTO.rep (id2Rep, id2KeyToPos) T //TBR
                       let mkNonNullableInstance (vs:obj) : Instance  =
                            rep.Open {new RepOpen<Instance> with member this.Case<'T>(r:Rep<'T>) = NonNullableInstance<'T> (vs :?> 'T[] ):> Instance }
-                      let LCE' = (cn, fun vs -> mkNonNullableInstance  vs:> ColValue)::LCE
-                      trColumns (pv::pars) (av::decs) (exp::exps) ((null:>obj)::args)  (CE',LCE') rest
+                      let LCE' = (cn, fun (vs:obj) -> mkNonNullableInstance  (X.DeRef(vs)) :> ColValue)::LCE
+                      trColumns (pv::pars) (av::decs) (exp::exps) ((X.Ref(Ts,None))::args)  (CE',LCE') rest
+
+
                 trColumns pars decs exps args (Map.empty,[]) table
             
           let compile mode db tables = 
