@@ -33,7 +33,7 @@ module Tex =
   and PredictorToString p = 
      match p with
      | S.Scalar f -> sprintf "%A" f
-     | S.Variable (v,_) -> ident v
+     | S.Variable (v,_,_) -> ident v
      | S.Interaction (p1,p2) -> sprintf "%O:%O" (PredictorToString p1) (PredictorToString p2)
      | S.Path ([p1],p2) -> sprintf "%O.%O" (PredictorToString p1) (PredictorToString p2)
      | S.Path (ps,p) -> sprintf "(%O).%O" (String.concat "," (List.map PredictorToString ps)) (PredictorToString p) 

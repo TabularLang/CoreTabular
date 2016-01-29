@@ -51,13 +51,13 @@ P :=
                          Variable.ident() *)
 Index Expressions:
 e :=
-  | c                 (* attribute name *) 
+  | c                 (* attribute (ie. variable) name *) 
   | i                 (* integer literal i > 0 *)
   | SizeOf(t)         (* SizeOf (previously declared) table t *)
 
 Expressions:
 E :=
-  | e                    (* index expressione *)
+  | e                    (* index expression e *)
   | l                    (* literal *)
   | t.c                  (* parameter c of table t)
   | E.c		             (* attribute of key E *)
@@ -91,20 +91,30 @@ M :=
   | M[E]                 (* indexed model with implicit bound *)
   | M[E < e]             (* indexed model with explicit bound *)
   | f(c1=E1,...,cn=En)   (* function call *)
-  | ~ r                   (* regression *)
- 
-Regressions
+  | ~ r                  (* regression *)
+
+Predictors:
+p :=
+  | c                    (* attribute name  *)
+  | l                    (* scalar literal, integer or float typed as real*)
+  | p1 : p2              (* multiplicative interaction *)
+  | ( p1,...,pn).p       (* path *)
+
+Regressions:
 r :=
-  | ? 	                 (* noise *)
-  | ?{pi}                (* named noise *)
-  | ?{pi=E}              (* named noise with precision E *)
-  | r1 + r2
-  | E                    (* term with implicit coefficent with default prior *)
-  | E{alpha}             (* term with explicit coefficent name alpha with default prior *)
-  | E{alpha~r}           (* term with explicit coefficent named alpha nested regression *)
-  | 'E                   (* coefficent-less term *)
-  | (r | c)              (* regression grouped by (discrete) variable c *)
- 
+  (alpha and pi additionally range over attribute names c denoting parameters *)
+  | r1 + r2              (* sum of regressions *)
+  | p                    (* sugar: predictor with implicit coefficent with default prior *)
+  | p{alpha}             (* sugar: predictor with explicit coefficent named alpha with default prior *)
+  | p{alpha~r}           (* predictor with explicit coefficent named alpha given by nested regression *)
+  | 'p                   (* coefficent-less, immediate predictor *)
+  | (r | p)              (* regression grouped by (discrete) predictor p *)
+  | D(p1,...,pn)         (* draw / explicit noise *)
+  | ? 	                 (* sugar: default noise *)
+  | ?{pi}                (* sugar: named noise *)
+  | ?{pi~r}              (* sugar: named noise with precision r *)
+  | new pi . r           (* restriction *)
+  | (r)                  (* parenthesized regression *)
 
 Columns:
 col := c T  input        (* concrete input or 

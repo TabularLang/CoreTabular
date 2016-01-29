@@ -19,7 +19,7 @@ module Erase =
    | Variable _  -> p
    | Interaction (p1,p2) -> Interaction(predictor p1, predictor p2)
    | Path(ps,p) -> Path (List.map predictor ps, predictor p)
-   | TypedPredictor (p,t) -> predictor p
+   | TypedPredictor (p,t,lift) -> predictor p
    
   and regr r = 
    match r with
