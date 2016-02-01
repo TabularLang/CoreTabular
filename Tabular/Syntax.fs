@@ -95,14 +95,16 @@ module Syntax =
              | MRegn of Regression 
 
   and VariableSort =  Level*TableName (* indicates cross table reference; resolved by elaboration *)
-      
+ 
+  and Arity = int (* number of indices discarded *)
+
   and Predictor = 
              | Scalar of double
-             | Variable of VarName * (VariableSort option)
+             | Variable of VarName * (VariableSort option) * Arity
              | Interaction of Predictor * Predictor
              | Path of Predictor list * Predictor
-             | TypedPredictor of Predictor * ColumnType
-  
+             | TypedPredictor of Predictor * ColumnType * bool
+
 
   and Regression  =   
              | Immed of Predictor
@@ -122,7 +124,7 @@ module Syntax =
   
   and Visibility = In | Local | Output of bool (*true if Latent*)
   and Level = Instance | Static     
-  
+
   
   (*
   type Markup     = Input                  // column treated as input, no model, just observed data, not predictable
@@ -193,7 +195,7 @@ module Syntax =
   let T_Link tn = T_Det(B_Link tn,D)
   let (|T_Link|_|) t = match t with T_Det(B_Link tn,_) -> Some tn | _ -> None
  
-  
+
   (* *)
 
   let mutable counter = 0;
@@ -310,7 +312,7 @@ module Syntax =
             "CDiscrete", {Type=T_Upto (Exp.Var "N"); 
                               Markup=Observable(MExp(Dist(Discrete,[Const(IntConst n); Var "V"])))} ])
 
-
+ 
   let rec substE ((ex,x) as exx) =
     //todo: fix binding cases
     let rec sub e =
@@ -473,18 +475,22 @@ module Syntax =
 
 
   let coreT (FE:Map<FunName,Table>) (T:Table):Table = List.concat (List.map (morph 0 FE) T)
- 
+
 
 
 
   module Regressions = 
+
+     
+  
+
     module Abbreviations =
       let defaultPrior:Regression = Noise(GaussianFromMeanAndPrecision, [Scalar 0.0 ;Scalar 0.00001])
       let defaultError:Regression = Noise(GammaFromShapeAndScale, [Scalar 1.0; Scalar 100000.0])
 
-      let queryWithPrior v r  = Sum(Coeff(Scalar(0.0),v,r),Noise(GaussianFromMeanAndPrecision,[Scalar 0.0;Variable (v,None)]))
-      let queryWithName v =  queryWithPrior v defaultError
-      let query() = let v = fresh()in Res(v,queryWithName v)
+      let queryWithPrior ps v r  = Sum(Coeff(Scalar(0.0),v,r),Noise(GaussianFromMeanAndPrecision,[Scalar 0.0;Path(ps,Variable (v,None,0))]))
+      let queryWithName ps v =  queryWithPrior ps v defaultError
+      let query ps  = let v = fresh()in Res(v,queryWithName ps v)
   
     module Sugar =
        let desugar col =
@@ -517,6 +523,33 @@ module Syntax =
   
   
     module Semantics =
+
+      type Dim  = 
+               | Id                
+               | Vector of Exp
+
+      let  Dim dim t = match dim with 
+                            | Id -> t
+                            | Vector e -> T_Array(t,e)
+      let (| Dim |_|) dim t =
+          match dim,t with
+          | Id,t -> Some t
+          | Vector e, T_Array(u,e') 
+            when (* areTermsEquivalent G_Empty e e' T_Int *) e = e' -> //TBR
+            Some u 
+          | _,_ -> None
+
+      let (| RealDim |_|) t =
+          match t with
+          | T_Real -> Some Id
+          | T_Array(u,e) -> Some (Vector e)
+          | _ -> None
+
+      let dimToString dim = 
+          match dim with
+          | Id -> "scalar dimensionality"
+          | Vector e ->  sprintf "vector dimensionality %A" e //(Pretty.exprToStr e) 
+
       let rec Arrays ty es = 
               match es with 
               | [] -> ty
@@ -542,18 +575,24 @@ module Syntax =
       let freshen es = let zs = List.mapi (fun i e -> fresh()) es in zs, List.map Var zs
                     
 
-      let plus dim e1 e2 = 
-              match dim with
-              | T_Real -> Prim(Plus,[e1;e2])
-              | T_Array(T_Real,e) -> 
-                  let i = fresh()
-                  ForLoop(i,e,Prim(Plus,[Subscript(e1,Var i);Subscript(e2,Var i)]))
+      let sum e1 e2 = 
+          match e1,e2 with
+          | Const(RealConst 0.0),e2 -> e2
+          | e1, Const(RealConst 0.0) -> e1
+          | _ -> Prim(Plus,[e1;e2])
 
+      let product e1 e2 = 
+          match e1,e2 with
+          | Const(RealConst 0.0),e2 -> Const(RealConst 0.0)
+          | e1, Const(RealConst 0.0) -> Const(RealConst 0.0)
+          | Const(RealConst 1.0),e2 -> e2
+          | e1,Const(RealConst 1.0) -> e1
+          | _ -> Prim(Mult,[e1;e2]) 
   
       let vecT dim ty =
           match dim with
-              | T_Real -> ty
-              | T_Array(T_Real,e) -> T_Array(ty,e)
+              | Id -> ty
+              | Vector(e) -> T_Array(ty,e)
   
       let vecE e E =
           let v = fresh () 
@@ -567,93 +606,76 @@ module Syntax =
               match zs with
               | [] -> Var cn
               | Z::zs -> Sub (Ref(tn,cn)) zs
-      let rec predictor dim p Es = //TBC refactor
-              match dim with 
-              | T_Real -> 
-                match p with 
-                | Scalar c -> Const (RealConst c)
-                | Variable (cn,None)-> Sub (Var cn) Es
-                | Variable (cn,Some (Instance,tn)) -> DeRefs tn cn Es  //NB: minor difference from paper to use deref on first Es
-                | Variable (cn, Some (Static,tn)) -> Refs tn cn Es //NB: minor difference from paper to use discard first Es, implicitly lifting
-                | Interaction(p1,p2) -> Prim(Mult,List.map (fun e -> predictor dim e Es) [p1;p2] )
-                | Path(ps,p) -> predictor dim  p (List.map (fun p -> predictor dim p Es) ps) //TBR
-                | TypedPredictor(p,t) -> predictor dim p  Es
-              | T_Array(T_Real, e) ->
-                match p with 
-                | Scalar c -> vecE e (fun i -> Const (RealConst c))
-                | Variable (cn,None)-> Sub (Var cn) Es 
-                | Variable (cn,Some (Instance,tn)) -> DeRefs tn cn Es //NB: minor difference from paper to use deref on first Es
-                | Variable (cn, Some (Static,tn)) -> Refs tn cn Es //NB: minor difference from paper to use discard on first Es, implicitly lifting
-                | Interaction(p1,p2) -> vecE e (fun i -> Prim(Mult,List.map (fun p -> Subscript(predictor dim p Es, i)) [p1;p2] )) //TBR
-                | Path(ps,p) -> predictor dim p (List.map (fun p -> predictor dim p Es) ps)
-                | TypedPredictor(p,t) -> predictor dim p  Es
          
 
-      let rec isZero p =
+      let rec drop n l = 
+                      match n,l with
+                      | 0,_ -> l
+                      | n,_::l'-> drop (n-1) l'
+                      | _ -> failwith "drop"
+
+      let rec dropLast l =
+                      match l with
+                      | [] -> failwith "dropLast"
+                      | [_] -> []
+                      | h::l'-> h::dropLast l'
+
+      let rec predictor p Es = //TBC refactor
               match p with 
-              | Scalar d -> d = 0.0
-              | Variable _ -> false
-              | Interaction(p1,p2) -> isZero p1 || isZero p2
-              | Path(ps,p) -> false
-              | TypedPredictor(p,t) -> isZero p
+                | Scalar c -> Const (RealConst c)
+                | Variable (cn,None,n)-> Sub (Var cn) (drop n Es)
+                | Variable (cn,Some (Instance,tn),n) -> DeRefs tn cn (match Es with 
+                                                                      | (E::Es) -> E::(drop n Es)
+                                                                      | [] -> failwithf "bug: bad predictor"
+                                                                      )//NB: minor difference from paper to use deref on first Es
+                | Variable (cn, Some (Static,tn),n) -> Refs tn cn   (match Es with 
+                                                                      | (E::Es) -> E::(drop n Es)
+                                                                      | [] -> failwithf "bug: bad predictor"
+                                                                      ) //NB: minor difference from paper to use discard first Es, implicitly lifting
+                | Interaction(p1,p2) -> Prim(Mult,List.map (fun e -> predictor  e Es) [p1;p2] )
+                | Path(ps,p) -> predictor p (List.map (fun p -> predictor  p Es) ps) //TBR
+                | TypedPredictor(p,t,false) -> predictor p Es
+                | TypedPredictor(p,t,true) -> predictor p (dropLast Es)
   
+      // introduce just one loop for the entire regression, not one per regression term 
       let rec regression dim (es:Exp list) (fs:Exp List) (Fs:Exp list) r =
+            let zs,Zs = freshen es
+            let (is, Is), ibs =  
+                     match dim with
+                     | Id -> ([],[]),[]
+                     | Vector e -> (freshen [e]),[e]
+           
+            let rec regression_body  (fs:Exp List) (Fs:Exp list) r =
               match r with
-              | Immed E ->  let zs,Zs = freshen es
-                            ([],Fors zs es (predictor dim  E Zs)) 
-              | Sum (r1,r2)  ->  let zs,Zs = freshen es
-                                 let (ps1,E1)  = regression dim es fs Fs r1
-                                 let (ps2,E2) = regression dim es fs Fs r2
-                                 let v1 = fresh()
-                                 let v2 = fresh()
-                                 (ps1@ps2,Let(v1,E1,
-                                            Let(v2,E2,
-                                                Fors zs es (plus dim (Sub (Var v1) Zs) (Sub (Var v2) Zs)))))
-              | Noise (d,ps) ->  let zs,Zs = freshen es
-                                 ([],
-                                  (match dim with
-                                  | T_Real ->
-                                    Fors zs es (Dist(d,List.map (fun p -> predictor T_Real  p (List.map (fun F -> Sub F Zs) Fs)) ps)) //TBR dim
-                                  | T_Array(T_Real,e) ->  
-                                    Fors zs es (vecE e (fun _ -> (Dist(d,List.map (fun p -> predictor T_Real p (List.map (fun F -> Sub F Zs) Fs)) ps)))))) //TBR dim
-              | Coeff (p,alpha,r) when isZero(p) ->
-                    let zs,Zs = freshen es
-                    let E = predictor dim p Zs
+                | Immed p ->  
+                      ([], predictor p (Zs@Is)) 
+                | Sum (r1,r2) ->  
+                      let (ps1,E1)  = regression_body fs Fs r1
+                      let (ps2,E2) = regression_body fs Fs r2
+                      (ps1@ps2, sum E1 E2)
+                | Noise (d,ps) ->  
+                      ([],
+                       Dist(d,List.map (fun p -> predictor p (Zs@Is)) ps))
+                | Coeff (p,alpha,r) ->
+                    let E = predictor p (Zs@Is)
                     let (ps,E0)  = regression dim fs [] [] r 
-                    (
-                     ps@[alpha,{Type=Arrays (vecT dim T_Real) fs;Markup=Param(MExp E0)}],
-                     (match dim with
-                       | T_Real ->
-                                  (Fors zs es (Const(RealConst 0.0)))
-                       | T_Array(T_Real,e) ->
-                                 (Fors zs es (vecE e (fun i -> (Const(RealConst 0.0)))))))
-              | Coeff (p,alpha,r) ->
-                    let zs,Zs = freshen es
-                    let E = predictor dim p Zs
-                    let (ps,E0)  = regression dim fs [] [] r 
-                    (
-                     ps@[alpha,{Type=Arrays (vecT dim T_Real) fs;Markup=Param(MExp E0)}],
-                     (match dim with
-                       | T_Real ->
-                                  (Fors zs es (Prim(Mult,[E;Sub (Var alpha) (List.map (fun F -> Sub F Zs) Fs)])))
-                       | T_Array(T_Real,e) ->
-                                  (Fors zs es (vecE e (fun i -> (Prim(Mult,[Subscript (E,i);Subscript(Sub (Var alpha) (List.map (fun F -> Sub F Zs) Fs),i)]))))))) 
-              | Cond (r,p,T_Upto f) ->
-                    let zs,Zs = freshen es
-                    let F = Fors zs es (predictor dim p Zs) 
-                    regression dim es (f::fs) (F::Fs)  r
-              | Res(v,r) ->
-                    let (ps,r) = regression dim es fs Fs r
+                    let Alpha = Sub (Var alpha) (Fs@Is)
+                    (ps@[alpha,{Type=Arrays (Dim dim T_Real) fs;Markup=Param(MExp E0)}],
+                     product E Alpha)
+                | Cond (r,p,(T_Array (T_Upto f,_) | T_Upto f)) -> 
+                      let F = predictor p Zs
+                      regression_body (f::fs) (F::Fs)  r
+                | Res(v,r) ->
+                    let (ps,r) = regression_body fs Fs r
                     let ps' = List.map (fun ((w,{Type=T;Markup=(l,_,m)}) as pi) -> if w = v then (v,{Type=T;Markup=(l,Local,m)}) else pi) ps
                     (ps',r)
-
-      let column (y,{Type=ty;Markup=(l,v,MRegn r)}) =
-          let (ps,E) = regression ty  [] [] [] r
-          ps@[y,{Type=ty;Markup=(l,v,MExp E)}]
-
-
+            let (ps,body) = regression_body fs Fs r
+            (ps,Fors (zs@is) (es@ibs) body)
    
 
+      let column (y,{Type=(RealDim dim) as t;Markup=(l,v,MRegn r)}) =
+          let (ps,E) = regression dim  [] [] [] r
+          ps@[y,{Type=t;Markup=(l,v,MExp E)}]
 
 
   let rec regressT T = 

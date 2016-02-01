@@ -11,7 +11,7 @@ let outputOf m = Observable m
 let hyperOf m = match m with MExp e -> Hyper e | _ -> (Static,In,m)
 let markupOf (l,v) m = (l,v,m) : Markup
 type MarkupOf = Model -> Markup
-
+type PredictorsToRegression = (Predictor list) -> Regression
 %}
 // These are the terminal tokens of the grammar along with the types of
 // the data carried by each token:
@@ -89,7 +89,7 @@ type MarkupOf = Model -> Markup
 //Fabular
 %type <Predictor> Predictor
 %type <Predictor list> PredictorList
-%type <Regression> Regression
+%type <PredictorsToRegression> Regression
 %%
 
 // These are the rules of the grammar along with the F# code of the 
@@ -129,7 +129,7 @@ Model:
     | Model LSQBRACKET Exp1 LT Exp0 RSQBRACKET  { MIndexed($1,$3,$5)  }       
 	| Model LSQBRACKET Exp1 RSQBRACKET  { MIndexed($1,$3,Const (IntConst -1))  }
 // Fabular
-    | TILDE  Regression {MRegn($2)}    
+    | TILDE  Regression {MRegn(($2) [])}   // [] is enclosing group terms, accummulated for noise sugar 
 // Empty        
 	|                              { MEmpty}     
 	
@@ -285,7 +285,7 @@ DistOp :
 
 
 Predictor:
-    | IDENT      {Variable($1,None)}
+    | IDENT      {Variable($1,None,-1)}
 	| FLOAT      {Scalar($1) }
 	| INT		 {Scalar((float) $1)}	// implicit coercion 
 	| Predictor COLON Predictor {Interaction($1,$3)}
@@ -299,18 +299,18 @@ PredictorList :
 
 
 Regression:
-    | TICK Predictor      { Immed($2) }
-	| Regression PLUS Regression		 { Sum($1,$3) }
-	| QUERY LCURL IDENT TILDE Regression RCURL  { queryWithPrior $3 $5}
-	| QUERY LCURL IDENT RCURL { queryWithName $3}
-	| QUERY { query() }
+    | TICK Predictor      { fun ps -> Immed($2) }
+	| Regression PLUS Regression		 { fun  ps -> Sum($1 ps ,$3 ps) }
+	| QUERY LCURL IDENT TILDE Regression RCURL  { fun ps -> queryWithPrior (List.rev ps) $3 ($5 [])}
+	| QUERY LCURL IDENT RCURL { fun ps -> queryWithName (List.rev ps) $3}
+	| QUERY { fun ps -> query (List.rev ps) }
 	| LPAR Regression RPAR   { $2} 
-	| LPAR Regression OR Predictor RPAR  { Cond($2,$4,Syntax.T_Int)} // T_Int is a dummy placeholder
-	| Predictor LCURL IDENT TILDE Regression RCURL { Coeff($1,$3,$5)}
-	| Predictor LCURL IDENT RCURL { Coeff($1,$3,defaultPrior)}
-	| Predictor { Coeff($1,null,defaultPrior)}
-	| DistOp LPAR PredictorList RPAR {Noise($1,$3)}
-	| NEW IDENT DOT Regression {Res($2,$4)} 
+	| LPAR Regression OR Predictor RPAR  { fun ps -> Cond($2 ($4::ps),$4,Syntax.T_Int)} // T_Int is a dummy placeholder
+	| Predictor LCURL IDENT TILDE Regression RCURL { fun ps -> Coeff($1,$3,$5 [])}
+	| Predictor LCURL IDENT RCURL { fun ps -> Coeff($1,$3,defaultPrior)}
+	| Predictor { fun ps -> Coeff($1,null,defaultPrior)}
+	| DistOp LPAR PredictorList RPAR {fun ps -> Noise($1,$3)}
+	| NEW IDENT DOT Regression {fun ps -> Res($2,$4 ps) } 
 
 
 
