@@ -42,6 +42,23 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TrueSkill", "TrueSkill", "{
 		Samples\TrueSkill\TrueSkill.csv = Samples\TrueSkill\TrueSkill.csv
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{547741AA-B9BF-43A2-BCDF-37E9C8586E7F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Outliers", "Outliers", "{52534B29-326C-46F6-A97D-55B4611DF87C}"
+	ProjectSection(SolutionItems) = preProject
+		Samples\Outliers\Outliers.txt = Samples\Outliers\Outliers.txt
+		Samples\Outliers\Points.csv = Samples\Outliers\Points.csv
+		Samples\Outliers\run.bat = Samples\Outliers\run.bat
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MixedLinearRegression", "MixedLinearRegression", "{2645C3C6-33E5-4CFE-A2BF-A2AB087ED937}"
+	ProjectSection(SolutionItems) = preProject
+		Samples\MixedLinearRegression\Classes.csv = Samples\MixedLinearRegression\Classes.csv
+		Samples\MixedLinearRegression\Paper.txt = Samples\MixedLinearRegression\Paper.txt
+		Samples\MixedLinearRegression\Points.csv = Samples\MixedLinearRegression\Points.csv
+		Samples\MixedLinearRegression\run.bat = Samples\MixedLinearRegression\run.bat
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(TeamFoundationVersionControl) = preSolution
 		SccNumberOfProjects = 8
@@ -221,6 +238,8 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{23961F19-6628-4782-B343-94DE7CF3B6B5} = {73ECA732-1709-4BF6-A83D-EEE75054A8A9}
 		{F3A11310-A3A1-408A-9EB2-F7AF275F5410} = {73ECA732-1709-4BF6-A83D-EEE75054A8A9}
+		{52534B29-326C-46F6-A97D-55B4611DF87C} = {73ECA732-1709-4BF6-A83D-EEE75054A8A9}
+		{2645C3C6-33E5-4CFE-A2BF-A2AB087ED937} = {73ECA732-1709-4BF6-A83D-EEE75054A8A9}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		EnterpriseLibraryConfigurationToolBinariesPath = packages\Unity.2.1.505.2\lib\NET35
