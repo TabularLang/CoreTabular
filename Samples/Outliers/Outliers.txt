@@ -1,0 +1,11 @@
+Points[Point]			
+X	real	input	
+Outlier	bool	local	Bernoulli(0.1)
+Noise	real	local	if Outlier then Gaussian(0.0,1000.0) else Gaussian(0.0,1.0)
+Y	real	output	~X{A}+1{B} + 'Noise
+PY	real	latent	infer.Gaussian.Mean(Y) (* prediction *)
+StdDev	real	latent	infer.Gaussian.StdDeviation(Y) (* prediction *)
+PF	real	latent	X*infer.Gaussian.Mean(A)+infer.Gaussian.Mean(B) (* line *)
+isOutlier	bool	latent	infer.Bernoulli.Bias(Outlier) > 0.5
+diff	real	latent	PF - PY
+			

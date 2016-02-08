@@ -72,7 +72,7 @@ module CLI =
         if saveTypedModels then
             let modelName = modelshortname
             saveModeToCSV outputDir (modelName + "_typedFull.csv") typedFullSchema
-            saveModeToCSV outputDir (modelName + "_typedCore.csv"     ) (Syntax.coreS (Library.prelude @ schema))
+            saveModeToCSV outputDir (modelName + "_typedCore.csv") typedCoreSchema 
 
         TypedDTO.writeCSV   outputDir
                             typedCoreSchema

@@ -24,6 +24,17 @@ let FaithfulTxt() =
     runTest (System.IO.Path.Combine("..","..","..","Samples","Faithful","Model.txt"))  true
     Assert.True(true)
 
+[<Test>]
+let OutliersTxt() = 
+    runTest (System.IO.Path.Combine("..","..","..","Samples","Outliers","Outliers.txt"))  true
+    Assert.True(true)
+
+[<Test>]
+let MixedLinearRegressionTxt() = 
+    runTest (System.IO.Path.Combine("..","..","..","Samples","MixedLinearRegression","Paper.txt"))  true
+    Assert.True(true)
+
+
 [<EntryPoint>]
 let main argv = 
     printfn "%A" argv

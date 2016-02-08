@@ -1,0 +1,7 @@
+Classes[ID]			
+			
+Points[Point]			
+X	real	input	
+Class	link(Classes)	output	DiscreteUniform(SizeOf(Classes))
+Y	real	output	~ (1{intercept~Gaussian(0.0,100.0)}+X{slope~Gaussian(0.0,100.0)} + ?{pi~Gamma(1.0,2.0)} | Class)
+			
