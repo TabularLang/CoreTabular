@@ -1,0 +1,20 @@
+"Leagues[leagueId]","","",""
+"skillModifier","real","latent","GaussianFromMeanAndPrecision(0.0, 1.0)"
+"","","",""
+"Teams[teamId]","","",""
+"leagueId","link(Leagues)","input",
+"individualSkill","real","latent","GaussianFromMeanAndPrecision(5.0, 1.0)"
+"skill","real","latent","individualSkill + leagueId.skillModifier"
+"","","",""
+"Matches[matchId]","","",""
+"homeSkillAdvantage","real","param","GaussianFromMeanAndPrecision(0.0, 0.1)"
+"gameId","int","input",
+"team1Id","link(Teams)","input",
+"team1Score","int","input",
+"team2Id","link(Teams)","input",
+"team2Score","int","input",
+"team1WasHome","real","input",
+"team1HomeAdvantage","real","latent","team1WasHome * homeSkillAdvantage"
+"team1Perf","real","latent","GaussianFromMeanAndPrecision(team1Id.skill + team1HomeAdvantage, 4.0)"
+"team2Perf","real","latent","GaussianFromMeanAndPrecision(team2Id.skill, 4.0)"
+"team1Won","bool","output","team1Perf > team2Perf"

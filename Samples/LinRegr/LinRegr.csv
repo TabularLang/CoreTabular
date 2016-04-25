@@ -1,0 +1,8 @@
+"Points[Point]","","",""
+"X","real","input",""
+"A","real","param","GaussianFromMeanAndPrecision(0.0,1.0)"
+"B","real","param","GaussianFromMeanAndPrecision(0.0,1.0)"
+"Y","real","output","GaussianFromMeanAndPrecision(X*A+B,1.0)"
+"PY","real","latent","infer.Gaussian.Mean(Y) (* prediction *)"
+"StdDev","real","latent","infer.Gaussian.StdDeviation(Y) (* prediction *)"
+"PF","real","latent","X*infer.Gaussian.Mean(A)+infer.Gaussian.Mean(B) (* line *)"
