@@ -44,7 +44,7 @@ Building under recent Ubuntu with Mono and optional MonoDevelop, goes something 
 ```
 cd CoreTabular 
 #get MS VB dll
-sudo apt-get install libmono-microsoft-visualbasic10.0-cil 
+sudo apt-get install libmono-microsoft-visualbasic10.0-cil fsharp
 sudo apt-get install nuget
 nuget restore
 chmod a+x packages/FsLexYacc.6.1.0/build/fslex.exe 
